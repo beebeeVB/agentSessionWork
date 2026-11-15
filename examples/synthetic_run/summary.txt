@@ -1,0 +1,116 @@
+*** SYNTHETIC DATA: numbers below test the code, not the dataset ***
+Sessions: 4,000 | accounts: 60 | harnesses: 5
+Requests per session: median 15, mean 29.9, p90 72, p99 234, max 400
+Single-request sessions: 3.5%
+Account concentration: top-1 = 14.4% of sessions, top-3 = 31.4%, Gini = 0.57
+Effective number of independent accounts (1/HHI): 18.9 (of 60)  <- this limits grouped analysis
+Possibly right-censored: 0.6%; left-truncated: 1.3%
+Observed start range: 2026-08-30 00:09:28.204000 -> 2026-09-05 22:55:18.056000 (sanity-check the UTC assumption)
+ICC of log session length across accounts: 0.37 (share of variance explained by WHO the account is)
+
+Forecast MAE on log(1+requests) [lower = better]:
+design         grouped                                           random                                         temporal                                 
+model  baseline_global baseline_harness    gbm gbm_hist baseline_global baseline_harness    gbm gbm_hist baseline_global baseline_harness    gbm gbm_hist
+k                                                                                                                                                        
+1                0.872            0.916  0.921    0.920           0.843            0.820  0.835    0.711           0.849            0.820  0.840    0.705
+3                0.787            0.827  0.838    0.822           0.768            0.748  0.769    0.664           0.769            0.744  0.765    0.661
+5                0.719            0.762  0.764    0.756           0.700            0.687  0.705    0.627           0.704            0.683  0.716    0.619
+12               0.590            0.621  0.634    0.643           0.574            0.565  0.593    0.540           0.587            0.573  0.590    0.558
+
+Account-macro MAE (every account weighted equally), GBM:
+design  grouped  random  temporal
+k                                
+1         0.869   0.846     0.857
+3         0.765   0.748     0.758
+5         0.686   0.669     0.714
+12        0.556   0.544     0.556
+
+Median absolute error in REQUESTS, GBM:
+design  grouped  random  temporal
+k                                
+1          12.1    11.2      11.0
+3          13.0    12.1      12.1
+5          14.0    13.1      13.3
+12         17.1    16.3      16.2
+
+PAIRED: MAE(grouped) - MAE(random), GBM  (positive = new accounts are harder):
+  k= 1: +0.086 [+0.018, +0.147]  p=0.000
+  k= 3: +0.069 [+0.019, +0.113]  p=0.000
+  k= 5: +0.059 [+0.017, +0.091]  p=0.000
+  k=12: +0.042 [+0.018, +0.055]  p=0.000
+
+PAIRED: GBM skill over per-harness median, GROUPED eval:
+  k= 1: skill -0.5% [-2.6%, +1.3%]  p=0.480
+  k= 3: skill -1.4% [-5.7%, +1.7%]  p=0.407
+  k= 5: skill -0.2% [-5.2%, +2.7%]  p=0.773
+  k=12: skill -2.1% [-12.4%, +2.2%]  p=0.367
+
+PAIRED: GBM skill over per-harness median, RANDOM eval:
+  k= 1: skill -1.9% [-3.4%, -0.6%]  p=0.000
+  k= 3: skill -2.8% [-4.9%, -0.9%]  p=0.013
+  k= 5: skill -2.6% [-5.5%, -0.4%]  p=0.013
+  k=12: skill -4.9% [-10.8%, -1.9%]  p=0.000
+
+PAIRED: skill from knowing the harness at all (harness median vs global median), grouped:
+  k= 1: skill -5.1% [-10.4%, +2.2%]  p=0.220
+  k= 3: skill -5.1% [-9.3%, -0.0%]  p=0.053
+  k= 5: skill -5.9% [-8.6%, -1.3%]  p=0.040
+  k=12: skill -5.2% [-7.2%, -1.0%]  p=0.020
+
+PAIRED: skill from account-history features over plain GBM, RANDOM (warm accounts):
+  k= 1: skill +14.9% [+10.1%, +19.8%]  p=0.000
+  k= 3: skill +13.8% [+8.9%, +18.6%]  p=0.000
+  k= 5: skill +11.1% [+7.2%, +16.2%]  p=0.000
+  k=12: skill +8.9% [+5.3%, +13.8%]  p=0.000
+
+PAIRED: same, TEMPORAL (future sessions, mix of warm/new accounts):
+  k= 1: skill +16.0% [+10.6%, +21.1%]  p=0.000
+  k= 3: skill +13.6% [+8.0%, +18.6%]  p=0.000
+  k= 5: skill +13.5% [+8.5%, +20.0%]  p=0.000
+  k=12: skill +5.4% [-6.0%, +14.5%]  p=0.287
+
+P(session > T requests | first k): AUC (GBM / harness-rate baseline) and Brier skill:
+ k  T  design  pos_rate  auc_gbm  auc_baseline  brier_skill
+ 1 20  random     0.419    0.590         0.598       -0.027
+ 1 20 grouped     0.419    0.502         0.452       -0.013
+ 1 50  random     0.167    0.603         0.612       -0.025
+ 1 50 grouped     0.167    0.497         0.449       -0.015
+ 3 20  random     0.458    0.556         0.593       -0.056
+ 3 20 grouped     0.458    0.467         0.468       -0.046
+ 3 50  random     0.183    0.581         0.610       -0.039
+ 3 50 grouped     0.183    0.473         0.495       -0.034
+ 5 20  random     0.512    0.559         0.576       -0.045
+ 5 20 grouped     0.512    0.497         0.512       -0.039
+ 5 50  random     0.204    0.570         0.602       -0.047
+ 5 50 grouped     0.204    0.495         0.482       -0.040
+12 20  random     0.714    0.533         0.566       -0.058
+12 20 grouped     0.714    0.502         0.465       -0.036
+12 50  random     0.285    0.512         0.583       -0.088
+12 50 grouped     0.285    0.451         0.466       -0.057
+
+Top features by grouped permutation importance (k=5):
+last_completion    0.0058
+elapsed_s          0.0017
+tool_calls         0.0013
+mean_ttft          0.0013
+prompt_first       0.0007
+frac_tool_reqs     0.0001
+mean_completion    0.0000
+model0             0.0000
+
+Conformal (90% target) on NEW accounts, k=5, mean over 6 splits:
+              coverage  width(x, median)  worst_harness  acct_p10
+method                                                           
+split            0.896            22.320          0.800     0.808
+mondrian         0.909            25.296          0.731     0.762
+normalized       0.913            23.654          0.798     0.793
+cqr              0.913            17.937          0.813     0.840
+random_calib     0.898            18.614          0.792     0.824
+  random_calib on SEEN accounts (what it looks like in-house): 90.3%
+
+Drift test (train 40% / calibrate 20% / stream 40% in time order, k=5):
+  static split-conformal coverage 90.3% | ACI coverage 90.1% (target 90%, 1262 streamed sessions)
+
+Caveats: target is requests per session; only sessions with > k requests are scored;
+censoring flags are a heuristic (UTC week bounds; try --drop-censored); sub-agent requests not counted;
+read grouped results with the effective number of accounts above in mind.

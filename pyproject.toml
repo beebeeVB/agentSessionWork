@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-session-forecast"
+version = "0.1.0"
+description = "Early forecasting of LLM agent session length, with honest uncertainty (account-grouped evaluation, paired bootstraps, conformal intervals)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.22",
+    "pandas>=1.5",
+    "scikit-learn>=1.1",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+# only needed to read the real trace from Hugging Face (not for --synthetic)
+data = ["zstandard", "huggingface_hub"]
+dev = ["pytest", "pyflakes"]
+
+[project.scripts]
+session-forecast = "agent_session_forecast.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["slow: runs the whole pipeline on synthetic data (~20s)"]
