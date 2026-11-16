@@ -1,0 +1,54 @@
+\begin{tabular}{lllllllll}
+\toprule
+k & design & method & n & pinball & crps\_grid & interval\_score & coverage\_central & width\_factor \\
+\midrule
+1 & random & resid\_quantiles & 11983 & 0.265 & 0.53 & 4.43 & 0.902 & 36.2 \\
+1 & random & qgbm & 11983 & 0.261 & 0.522 & 4.24 & 0.869 & 28.7 \\
+1 & random & lognormal & 11983 & 0.265 & 0.53 & 4.43 & 0.898 & 34.3 \\
+1 & random & lognormal\_het & 11983 & 0.26 & 0.519 & 4.21 & 0.913 & 38.6 \\
+1 & grouped & resid\_quantiles & 11983 & 0.296 & 0.592 & 4.89 & 0.866 & 35.1 \\
+1 & grouped & qgbm & 11983 & 0.291 & 0.582 & 4.75 & 0.846 & 30 \\
+1 & grouped & lognormal & 11983 & 0.296 & 0.592 & 4.91 & 0.862 & 33.5 \\
+1 & grouped & lognormal\_het & 11983 & 0.293 & 0.586 & 4.78 & 0.878 & 41.1 \\
+1 & temporal & resid\_quantiles & 3595 & 0.297 & 0.595 & 4.77 & 0.86 & 33.4 \\
+1 & temporal & qgbm & 3595 & 0.296 & 0.592 & 4.64 & 0.845 & 30.3 \\
+1 & temporal & lognormal & 3595 & 0.297 & 0.594 & 4.8 & 0.855 & 31.6 \\
+1 & temporal & lognormal\_het & 3595 & 0.294 & 0.587 & 4.63 & 0.887 & 41.8 \\
+3 & random & resid\_quantiles & 11806 & 0.255 & 0.511 & 4.25 & 0.904 & 30.9 \\
+3 & random & qgbm & 11806 & 0.251 & 0.502 & 4.03 & 0.867 & 24.7 \\
+3 & random & lognormal & 11806 & 0.256 & 0.511 & 4.26 & 0.907 & 30.7 \\
+3 & random & lognormal\_het & 11806 & 0.251 & 0.501 & 4.05 & 0.918 & 33.6 \\
+3 & grouped & resid\_quantiles & 11806 & 0.28 & 0.56 & 4.61 & 0.868 & 29.4 \\
+3 & grouped & qgbm & 11806 & 0.276 & 0.551 & 4.45 & 0.846 & 25.6 \\
+3 & grouped & lognormal & 11806 & 0.28 & 0.56 & 4.62 & 0.87 & 29.7 \\
+3 & grouped & lognormal\_het & 11806 & 0.277 & 0.555 & 4.51 & 0.89 & 35.1 \\
+3 & temporal & resid\_quantiles & 3542 & 0.281 & 0.563 & 4.51 & 0.868 & 28.7 \\
+3 & temporal & qgbm & 3542 & 0.279 & 0.558 & 4.34 & 0.862 & 26.8 \\
+3 & temporal & lognormal & 3542 & 0.281 & 0.563 & 4.52 & 0.865 & 27.7 \\
+3 & temporal & lognormal\_het & 3542 & 0.279 & 0.557 & 4.38 & 0.898 & 35.5 \\
+5 & random & resid\_quantiles & 11376 & 0.243 & 0.485 & 4.05 & 0.902 & 25.4 \\
+5 & random & qgbm & 11376 & 0.238 & 0.475 & 3.83 & 0.866 & 21 \\
+5 & random & lognormal & 11376 & 0.243 & 0.486 & 4.08 & 0.906 & 25.7 \\
+5 & random & lognormal\_het & 11376 & 0.238 & 0.476 & 3.85 & 0.922 & 27 \\
+5 & grouped & resid\_quantiles & 11376 & 0.263 & 0.527 & 4.35 & 0.872 & 25.3 \\
+5 & grouped & qgbm & 11376 & 0.262 & 0.523 & 4.27 & 0.843 & 21.6 \\
+5 & grouped & lognormal & 11376 & 0.264 & 0.528 & 4.36 & 0.881 & 24.8 \\
+5 & grouped & lognormal\_het & 11376 & 0.262 & 0.523 & 4.28 & 0.894 & 27.8 \\
+5 & temporal & resid\_quantiles & 3413 & 0.265 & 0.531 & 4.25 & 0.866 & 24.2 \\
+5 & temporal & qgbm & 3413 & 0.263 & 0.527 & 4.1 & 0.859 & 22.7 \\
+5 & temporal & lognormal & 3413 & 0.266 & 0.532 & 4.27 & 0.875 & 23.7 \\
+5 & temporal & lognormal\_het & 3413 & 0.263 & 0.527 & 4.15 & 0.902 & 29.1 \\
+12 & random & resid\_quantiles & 9877 & 0.211 & 0.422 & 3.57 & 0.904 & 17.1 \\
+12 & random & qgbm & 9877 & 0.208 & 0.415 & 3.36 & 0.864 & 13.9 \\
+12 & random & lognormal & 9877 & 0.212 & 0.424 & 3.62 & 0.913 & 17.2 \\
+12 & random & lognormal\_het & 9877 & 0.208 & 0.415 & 3.4 & 0.925 & 16.9 \\
+12 & grouped & resid\_quantiles & 9877 & 0.23 & 0.461 & 3.89 & 0.875 & 16.6 \\
+12 & grouped & qgbm & 9877 & 0.228 & 0.456 & 3.77 & 0.83 & 14.1 \\
+12 & grouped & lognormal & 9877 & 0.231 & 0.463 & 3.94 & 0.887 & 16.6 \\
+12 & grouped & lognormal\_het & 9877 & 0.229 & 0.458 & 3.8 & 0.898 & 17.8 \\
+12 & temporal & resid\_quantiles & 2963 & 0.231 & 0.461 & 3.76 & 0.866 & 16.1 \\
+12 & temporal & qgbm & 2963 & 0.229 & 0.457 & 3.63 & 0.846 & 14.4 \\
+12 & temporal & lognormal & 2963 & 0.231 & 0.463 & 3.82 & 0.882 & 16.3 \\
+12 & temporal & lognormal\_het & 2963 & 0.23 & 0.46 & 3.74 & 0.91 & 18.8 \\
+\bottomrule
+\end{tabular}

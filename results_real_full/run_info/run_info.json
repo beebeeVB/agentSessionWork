@@ -1,0 +1,120 @@
+{
+  "command_line": "session-forecast --weeks all --all-extras --feature-set rich --out results_real_full",
+  "started_utc": "2026-11-16T08:16:27+00:00",
+  "finished_utc": "2026-11-16T09:55:20+00:00",
+  "synthetic": false,
+  "fast_mode": false,
+  "git_commit": "3ae7329c4b139ef545b22eacb9fd102948f018e2",
+  "versions": {
+    "python": "3.13.2",
+    "platform": "macOS-15.8.1-x86_64-i386-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "sklearn": "1.9.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "statsmodels": "0.15.0",
+    "torch": null,
+    "pyarrow": "26.0.1",
+    "zstandard": "0.25.0",
+    "huggingface_hub": "2.4.0"
+  },
+  "random_seed": 0,
+  "weeks": [
+    "2026-05-17_2026-05-23",
+    "2026-05-24_2026-05-30",
+    "2026-05-31_2026-06-06",
+    "2026-06-07_2026-06-13",
+    "2026-06-14_2026-06-20",
+    "2026-06-21_2026-06-27",
+    "2026-06-28_2026-07-04",
+    "2026-07-05_2026-07-11",
+    "2026-07-12_2026-07-18",
+    "2026-07-19_2026-07-25",
+    "2026-07-26_2026-08-01",
+    "2026-08-02_2026-08-08",
+    "2026-08-09_2026-08-15",
+    "2026-08-16_2026-08-22",
+    "2026-08-23_2026-08-29",
+    "2026-08-30_2026-09-05"
+  ],
+  "source": "raw",
+  "drop_censored": false,
+  "n_sessions": 11983,
+  "n_accounts": 267,
+  "effective_n_accounts": 57.13435491013788,
+  "n_censored_right": 256,
+  "n_censored_left": 349,
+  "config": {
+    "K_LIST": [
+      1,
+      2,
+      3,
+      5,
+      8,
+      12,
+      20
+    ],
+    "EXTRA_KS": [
+      1,
+      3,
+      5,
+      12
+    ],
+    "KMAX": 20,
+    "ALPHA": 0.1,
+    "BOOT": 300,
+    "PAIR_BOOT": 1000,
+    "CONF_REPS": 20,
+    "FEATURE_SET": "rich",
+    "HAZARD_J": 40,
+    "QUANTILES": [
+      0.05,
+      0.25,
+      0.5,
+      0.75,
+      0.95
+    ],
+    "SEQ_EPOCHS": 25,
+    "DRO_ROUNDS": 3,
+    "MIX_CLASSES": [
+      2,
+      3,
+      4
+    ],
+    "HOLD_RATE": 0.01,
+    "TTL_GRID_S": [
+      0,
+      10,
+      30,
+      60,
+      120,
+      300,
+      600,
+      1800
+    ],
+    "WEIGHT_MODE": "exact"
+  },
+  "extras_enabled": [
+    "hazard",
+    "hierarchical",
+    "distributional",
+    "sequence",
+    "process",
+    "shift",
+    "decision",
+    "mixture",
+    "group_conformal"
+  ],
+  "analyses_failed": [],
+  "extra_analysis_seconds": {
+    "hazard": 231.1,
+    "hierarchical": 163.6,
+    "distributional": 351.1,
+    "sequence": 155.3,
+    "process": 106.6,
+    "shift": 1342.8,
+    "decision": 10.3,
+    "mixture": 164.1
+  }
+}
