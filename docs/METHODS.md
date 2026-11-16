@@ -124,9 +124,111 @@ true length is assumed to be known right after each session (in practice it is o
   been cut short, and one starting within two hours of the start may be a continuation. This is a heuristic
   (assumes week folders are UTC midnight). `--drop-censored` removes them for a sensitivity check. [`profiling.py`]
 
+## 11. Optional extra analyses: overview
+
+Sections 11-19 are **optional** (`--hazard`, `--hierarchical`, `--distributional`, `--group-conformal`,
+`--sequence`, `--process`, `--shift`, `--decision`, `--mixture`, or `--all-extras`). None of them changes the
+results of sections 1-10. Each runs on the same folds as the main experiment, is compared **at the same k** with the
+same paired account-level bootstrap, and writes to `<out>/extras/<name>/`. They use `cfg.EXTRA_KS` (default
+`[1, 3, 5, 12]`) because they are heavier than the main experiment. Hyper-parameters are fixed, not tuned to win: a
+tie with the plain GBM is an acceptable, publishable result. [`evaluation/compare.py`]
+
+`--feature-set rich` adds seven features computed from the first k requests only: share of steps triggered by the
+user, number of prompt mutations other than `append` (e.g. context compaction), number of length-truncated
+outputs, total tool result tokens, mean tool latency, number of sub-agent spawns, and number of distinct tool
+categories. The default (`base`) reproduces the original features. [`features.py`]
+
+## 12. Hazard / survival model (`--hazard`)
+
+Instead of regressing the length, model *how long the session keeps going*. At landmark k (session still alive) the
+hazard h(j) is the probability it ends exactly j requests later given it lasted j-1 more. Person-period rows turn this
+into classification; gradient boosting and logistic regression are both fitted. Survival S(j) = prod(1 - h(i));
+the **median remaining length** (smallest j with S(j) <= 0.5) is the point forecast compared with the other models.
+Right-censored sessions contribute hazard terms for the steps seen and no terminal event.
+Outputs: forecast and paired skill vs baselines, survival-curve calibration, AUC / Brier skill for "lasts more than h more
+requests" at h = 5, 10, 20, and a calibration table. *Limitation*: the horizon is capped at `HAZARD_J` (40); a median
+beyond it is reported as J + 1. [`evaluation/hazard.py`]
+
+## 13. Hierarchical model (`--hierarchical`)
+
+`y = harness mean + account random intercept + noise`, with variance components estimated by one-way ANOVA moments
+(deterministic) and, if `statsmodels` is installed, cross-checked with a REML `MixedLM`. Seen accounts are shrunk toward
+the harness mean by `B = n s_u^2 / (n s_u^2 + s_e^2)`; **unseen accounts get exactly the population prediction**. Two
+predictors are scored: `hier_eb` (pure mixed model) and `gbm_re` (GBM plus a shrunken account offset from out-of-fold
+residuals), next to the older `gbm_hist`. Outputs include the variance components, the model ICC vs the raw ICC from
+profiling, and a per-account table of raw vs shrunken effects. *Not included*: a random slope on k (each landmark is its own
+model, so k is constant within it). [`evaluation/hierarchical.py`]
+
+## 14. Distributional forecasts (`--distributional`)
+
+Predicts a quantile for each level in `cfg.QUANTILES` and scores the whole distribution: pinball loss, grid CRPS
+(2 x mean pinball over the levels), interval score of the central interval, central coverage, and quantile calibration.
+Methods: GBM mean + empirical OOF-residual quantiles (the baseline), per-level quantile GBMs, lognormal, and
+heteroscedastic lognormal. Paired skill is relative to the residual-quantile baseline. *Limitation*: the default grid is
+coarse (5 levels), so CRPS is an approximation useful for comparing methods, not as an absolute number.
+[`evaluation/distributional.py`]
+
+## 15. Group-aware conformal (`--group-conformal`)
+
+Adds three methods to the conformal comparison of section 8, evaluated **on the same account re-splits**:
+`loao` (leave-accounts-out calibration residuals), `cv_plus_group` (CV+ with account folds) and `weighted`
+(split-conformal reweighted by a classifier-estimated calibration-vs-test density ratio, weights clipped to
+[0.05, 20]). `loao` and `cv_plus_group` use train + calibration accounts together, so they see more data than `split`;
+read the comparison with that in mind. `random_calib` stays as the known-bad control. [`uncertainty/conformal.py`]
+
+## 16. Sequence models (`--sequence`)
+
+A small GRU over the per-request feature sequence (plus the static features), or an MLP on the flattened sequence if
+PyTorch is not installed (the output then says `seq_mlp`), and a bag of tool-signature n-grams fed to the GBM
+(`tool_ngram_gbm`). Fixed hyper-parameters, seeded, not tuned. At a few thousand sessions a tie with the GBM is the expected
+outcome. [`evaluation/sequence.py`]
+
+## 17. Process mining (`--process`)
+
+Each request is mapped to one state (`talk, explore, edit, run, subagent, error, other`) by keyword matching on the tool
+category (unknown categories go to `other`; priority error > subagent > edit > run > explore > other > talk). From the first
+20 requests we estimate the transition matrix, P(session ends | state) (excluding right-censored sessions) and the mean
+dwell per state (truncated at the window), and test state features (`gbm_states`). It is a first-order summary, not a fitted
+generative model. *Check the keyword lists against the real tool categories* before interpreting the states.
+[`evaluation/process.py`]
+
+## 18. Domain-shift methods (`--shift`)
+
+Does the account-grouped penalty shrink if the GBM is trained to generalise? Methods: account-balanced weights (1/n),
+square-root weights, group DRO (exponentiated-gradient reweighting of accounts with out-of-fold losses), and dropping the
+quarter of features that most separate accounts (ANOVA F). The headline is the **change in the grouped-minus-random gap vs the
+plain GBM**, with a paired account-level bootstrap. `--fast` uses weighted resampling instead of exact sample weights (the
+GBM's absolute-error loss makes exact weights several times slower); real runs use exact weights.
+[`evaluation/shift.py`]
+
+## 19. Decision-focused evaluation (`--decision`) and latent classes (`--mixture`)
+
+**Decision.** After request k, how long should the session's prompt prefix stay cached? Cost (in prefill-token units) is
+`HOLD_RATE * P * seconds_held + P * [miss]`, with P the prompt tokens of request k, so large sessions weigh more. Policies:
+always evict, best fixed TTL, harness continuation rate, a GBM continuation classifier (the discrete-time hazard at step k),
+and an oracle (lower bound). Account-grouped CV, paired bootstrap of the saving vs the best fixed TTL. **The cost constants
+(`HOLD_RATE = 0.01`, break-even gap 100 s; `TTL_GRID_S`) are assumptions, not measurements**; vary them. Only the first 20
+requests are stored, so k must be below 20. [`evaluation/decision.py`]
+
+**Mixture.** Inside each training fold: standardise, reduce to 8 principal components, pick the number of Gaussian-mixture
+classes by BIC, train one GBM expert per class (hard assignment, classes with < 60 sessions fall back to the global model),
+predict with the posterior-weighted average. Class profiles (size, length quantiles, harness mix) are written for
+interpretation. [`evaluation/mixture.py`]
+
+## 20. Data sources
+
+`--source raw` (default) streams the weekly `.jsonl.zst` files (about 108 GB decompressed for all 16 weeks). `--source parquet`
+reads the flattened `sessions` / `requests` / `tool_calls` Parquet tables (about 9 GB), from Hugging Face or from a local folder
+(`--parquet-dir`). Both produce identical per-session records (a test checks this on synthetic data). **The Parquet column
+names are discovered at run time and the mapping is printed; if a required column is missing the loader stops and lists the
+columns it saw.** It has not been run against the real files, so check the printed mapping on first use. `--weeks all` expands
+to the 16 weekly folders `2026-05-17_2026-05-23 ... 2026-08-30_2026-09-05`; a week that fails to download is skipped with a warning.
+[`data/loading.py`]
+
 ## Known simplifications
 
 - One seed, one family of model (gradient boosting). The conclusions are about this setup, not about every possible model.
 - Hyper-parameters are fixed, not tuned per k, so every model gets the same modest budget.
 - The temporal design is a single split, so read it as supporting evidence.
 - Sub-agent requests nested in tool calls are not counted toward the parent session's length.
+- The extra analyses (11-19) use fixed, modest hyper-parameters and a small set of k values; none was tuned to produce a win.

@@ -1,0 +1,24 @@
+\begin{tabular}{lllllllllllll}
+\toprule
+k & design & model & vs & diff & diff\_lo & diff\_hi & skill & skill\_lo & skill\_hi & p\_boot & n & accounts \\
+\midrule
+3 & random & seq\_mlp & gbm & 0.053 & 0.0284 & 0.0784 & -0.0608 & -0.0882 & -0.032 & 0 & 1784 & 140 \\
+3 & random & seq\_mlp & baseline\_harness & -0.0268 & -0.0734 & 0.013 & 0.0281 & -0.0138 & 0.0718 & 0.2 & 1784 & 140 \\
+3 & random & tool\_ngram\_gbm & gbm & -0.000294 & -0.00886 & 0.00752 & 0.000338 & -0.00866 & 0.00987 & 0.913 & 1784 & 140 \\
+3 & random & tool\_ngram\_gbm & baseline\_harness & -0.0801 & -0.115 & -0.0456 & 0.0842 & 0.0504 & 0.117 & 0 & 1784 & 140 \\
+3 & grouped & seq\_mlp & gbm & 0.0211 & -0.0063 & 0.0458 & -0.0221 & -0.0497 & 0.00655 & 0.153 & 1784 & 140 \\
+3 & grouped & seq\_mlp & baseline\_harness & -0.0109 & -0.0629 & 0.0254 & 0.011 & -0.0267 & 0.0594 & 0.593 & 1784 & 140 \\
+3 & grouped & tool\_ngram\_gbm & gbm & 0.00402 & -0.00597 & 0.0134 & -0.00421 & -0.014 & 0.00613 & 0.42 & 1784 & 140 \\
+3 & grouped & tool\_ngram\_gbm & baseline\_harness & -0.0279 & -0.0644 & 0.00856 & 0.0283 & -0.00918 & 0.0622 & 0.16 & 1784 & 140 \\
+3 & temporal & seq\_mlp & gbm & 0.0389 & -0.0125 & 0.0953 & -0.0435 & -0.109 & 0.0141 & 0.153 & 535 & 93 \\
+3 & temporal & seq\_mlp & baseline\_harness & -0.00729 & -0.067 & 0.0564 & 0.00775 & -0.0601 & 0.0693 & 0.853 & 535 & 93 \\
+3 & temporal & tool\_ngram\_gbm & gbm & -7e-05 & -0.0121 & 0.0126 & 7.83e-05 & -0.0146 & 0.0137 & 1 & 535 & 93 \\
+3 & temporal & tool\_ngram\_gbm & baseline\_harness & -0.0462 & -0.0964 & 0.0121 & 0.0492 & -0.0123 & 0.1 & 0.12 & 535 & 93 \\
+12 & random & tool\_ngram\_gbm & gbm & 0.00034 & -0.0135 & 0.0113 & -0.000467 & -0.0151 & 0.0187 & 0.967 & 1487 & 125 \\
+12 & random & tool\_ngram\_gbm & baseline\_harness & -0.064 & -0.102 & -0.0334 & 0.0808 & 0.0452 & 0.124 & 0 & 1487 & 125 \\
+12 & grouped & tool\_ngram\_gbm & gbm & -0.0135 & -0.0253 & -0.00327 & 0.0173 & 0.00424 & 0.0316 & 0.00667 & 1487 & 125 \\
+12 & grouped & tool\_ngram\_gbm & baseline\_harness & -0.0438 & -0.0792 & -0.00878 & 0.054 & 0.0114 & 0.093 & 0.0133 & 1487 & 125 \\
+12 & temporal & tool\_ngram\_gbm & gbm & -0.00369 & -0.018 & 0.0106 & 0.00507 & -0.0145 & 0.0253 & 0.593 & 446 & 85 \\
+12 & temporal & tool\_ngram\_gbm & baseline\_harness & -0.0433 & -0.0885 & -0.00386 & 0.0564 & 0.00529 & 0.111 & 0.04 & 446 & 85 \\
+\bottomrule
+\end{tabular}

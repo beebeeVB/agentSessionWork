@@ -64,3 +64,19 @@ def oof_predictions(out, splitter, split_groups):
         Htr, Hte = add_history(Xtr, y[tr], groups[tr], Xte, groups[te])
         P["gbm_hist"][te] = new_gbm().fit(Htr, y[tr]).predict(Hte)
     return P
+
+
+def prep_linear(Xtr, Xte):
+    """Scaled numeric matrices for linear / MLP models: signed log1p of every numeric column,
+    standardised with TRAIN statistics, plus a one-hot of the harness code."""
+    num = [c for c in Xtr.columns if c not in ("harness", "model0")]
+
+    def tf(X):
+        A = np.nan_to_num(X[num].to_numpy(float), nan=0.0, posinf=0.0, neginf=0.0)
+        return np.sign(A) * np.log1p(np.abs(A))
+
+    A_tr, A_te = tf(Xtr), tf(Xte)
+    mu, sd = A_tr.mean(0), A_tr.std(0) + 1e-6
+    H = int(max(Xtr["harness"].max(), Xte["harness"].max())) + 2
+    oh = lambda X: np.eye(H)[X["harness"].to_numpy(int) + 1]
+    return np.hstack([(A_tr - mu) / sd, oh(Xtr)]), np.hstack([(A_te - mu) / sd, oh(Xte)])

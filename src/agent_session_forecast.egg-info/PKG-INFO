@@ -1,0 +1,270 @@
+Metadata-Version: 2.4
+Name: agent-session-forecast
+Version: 0.2.0
+Summary: Early forecasting of LLM agent session length, with honest uncertainty (account-grouped evaluation, paired bootstraps, conformal intervals).
+License: MIT
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.22
+Requires-Dist: pandas>=1.5
+Requires-Dist: scikit-learn>=1.1
+Requires-Dist: scipy>=1.8
+Requires-Dist: matplotlib>=3.5
+Provides-Extra: data
+Requires-Dist: zstandard; extra == "data"
+Requires-Dist: huggingface_hub; extra == "data"
+Provides-Extra: parquet
+Requires-Dist: pyarrow; extra == "parquet"
+Requires-Dist: huggingface_hub; extra == "parquet"
+Provides-Extra: seq
+Requires-Dist: torch; extra == "seq"
+Provides-Extra: stats
+Requires-Dist: statsmodels; extra == "stats"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pyflakes; extra == "dev"
+Dynamic: license-file
+
+# agent-session-forecast
+
+**How long will this AI-agent session run, and how much should we trust that guess?**
+
+When someone starts a coding-agent session (Claude Code, Cline, Kilo, OpenCode, Hermes...), it might end after
+two requests or two hundred. If you run an inference service: it decides how you schedule GPUs,
+cache prompts and plan capacity. This project asks how well we can predict a session's total length from only
+its **first few requests**, and, more importantly, whether the usual way of measuring that is lying to us.
+
+It works on the public [FreeInference Agentic Trace](https://huggingface.co/datasets/harvardMadsys/freeinference_agentic_trace)
+(`harvardMadsys/freeinference_agentic_trace` on Hugging Face). No data is stored in this repo.
+
+---
+
+## The short version of the idea
+
+Most forecasting write-ups split their sessions randomly into train and test. That's fine if sessions are
+independent. They aren't: a handful of accounts produce most of the sessions, and each account has its *own habits*
+(some people always run long sessions, some always run short ones). A random split lets the model recognise
+the account in the test set, so it looks better than it will on someone it has never met.
+
+So this repo evaluates the same models three ways and compares them honestly:
+
+| Design | What it simulates | What it answers |
+|---|---|---|
+| **Random** | shuffle sessions | "how good is it on accounts we already know?" |
+| **Account-grouped** | hold out whole accounts | "how good is it on a **brand-new** user?" |
+| **Temporal** | train on early week, test on late week | "how good is it **tomorrow**?" |
+
+Then it asks the follow-up questions a careful person would ask:
+
+- Is the fancy model (gradient boosting) actually better than just "the median for this tool"?
+- Is the gap between random and grouped real, or just noise from having few accounts?
+- Do the prediction intervals really cover 90% of the time on new accounts, for every tool, for every account?
+- Do they still work as the week drifts along?
+
+---
+
+## What you get
+
+Run it once and you get two dashboards, a plain-text summary and a handful of CSVs. Since v0.2 the output folder is organised as
+`figures/` (PNG + PDF per figure), `tables/` (CSV + LaTeX), `extras/<analysis>/`, `run_info/` (provenance) and, with extras on, `dashboard3.png`.
+
+**Dashboard 1: the profile, the forecast error, the intervals**
+
+![dashboard 1](examples/synthetic_run/dashboard.png)
+
+**Dashboard 2: is the signal real?** (paired tests, which features matter, drift)
+
+![dashboard 2](examples/synthetic_run/dashboard2.png)
+
+**Dashboard 3: the optional extra analyses** (`--all-extras`)
+
+![dashboard 3](examples/synthetic_run/dashboard3.png)
+
+Every figure is also saved on its own (PNG + PDF) in `figures/`; samples are in
+[`examples/synthetic_run/figures/`](examples/synthetic_run/figures/).
+
+> These pictures come from the built-in **synthetic** data, which exists only to test the code.
+> The shapes are illustrative; the numbers say nothing about the real dataset.
+> See [`examples/synthetic_run/summary.txt`](examples/synthetic_run/summary.txt) for the matching text output.
+
+---
+
+## Quick start
+
+```bash
+git clone <this-repo-url>
+cd agent-session-forecast
+
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[data,dev]"       # drop ",data" if you'll only use synthetic data
+
+# 1) Try it with fake data (about a minute, no network):
+session-forecast --synthetic --fast --out results_demo
+
+# 2) Run it on the real trace (downloads one week from Hugging Face):
+session-forecast --weeks 2026-08-30_2026-09-05
+
+# 3) Several weeks at once, or a quick peek with a cap:
+session-forecast --weeks 2026-08-23_2026-08-29 2026-08-30_2026-09-05
+session-forecast --weeks 2026-08-30_2026-09-05 --max-sessions 5000
+
+# 4) Everything, on all 16 weeks, from the smaller Parquet tables (real data):
+session-forecast --weeks all --source parquet --feature-set rich --all-extras --out results_real_16wk
+
+# 5) Every extra analysis on fake data (about 5 minutes):
+make demo-all
+```
+
+**Recommended order for a real run:** first a smoke test
+(`--weeks 2026-08-30_2026-09-05 --max-sessions 2000 --fast --all-extras --feature-set rich`), then one full week, then `--weeks all`.
+The loader has only been tested on synthetic data, so a schema mismatch will show up in the smoke test, not an hour in.
+Do not report numbers from `--fast` or `--synthetic` runs.
+
+`python -m agent_session_forecast ...` works too. Everything lands in `--out` (default `results/`).
+
+| Flag | What it does |
+|---|---|
+| `--weeks W [W ...]` | Week folder name(s), e.g. `2026-08-30_2026-09-05` |
+| `--synthetic` | Use fake data in the same schema (no network) |
+| `--fast` | Fewer k values and bootstrap repetitions. A pipeline check, **not** for reporting numbers |
+| `--max-sessions N` | Cap sessions per week for quick tests |
+| `--drop-censored` | Drop sessions that look cut off at a week boundary (sensitivity run) |
+| `--out DIR` | Output directory |
+| `--weeks all` | All 16 weekly folders of the release |
+| `--source {raw,parquet}` | Stream the raw `.jsonl.zst` files (default) or read the flattened Parquet tables (~9 GB instead of ~108 GB) |
+| `--parquet-dir DIR` | Use already-downloaded Parquet files from a local folder |
+| `--feature-set {base,rich}` | `rich` adds trigger / mutation / tool result / latency / sub-agent features (default `base` = original) |
+| `--hazard` `--hierarchical` `--distributional` `--group-conformal` `--sequence` `--process` `--shift` `--decision` `--mixture` | Optional extra analyses (see below); each writes to `<out>/extras/<name>/` |
+| `--all-extras` | Turn all of the extra analyses on |
+
+---
+
+## A first, preliminary look at the real data
+
+The first version of the analysis (one script, week `2026-08-30_2026-09-05`) suggested a few things.
+I read these off its dashboard by eye, so treat them as **hypotheses this repo is built to test**, not conclusions:
+
+- Gradient boosting barely beat a plain "median length for this harness" baseline, and sometimes lost to it.
+- Holding out whole accounts made errors noticeably worse at small k (roughly 5-10%), but the confidence band was wide.
+- A single 90% interval covered about 90% overall, yet some harnesses sat nearer 85% and others nearer 95%.
+
+The paired bootstraps, Mondrian/CQR intervals and the temporal split are there to turn those hunches into
+statements with error bars (or to show they were noise).
+
+---
+
+## How the repo is laid out
+
+Each file has one job. If you want to change *how something is measured*, you shouldn't have to touch *how it's loaded*.
+
+```
+agent-session-forecast/
+├── README.md                     <- you are here
+├── pyproject.toml                <- packaging, dependencies, the `session-forecast` command
+├── LICENSE
+├── Makefile                      <- `make demo`, `make test`, `make lint`
+├── .github/workflows/tests.yml   <- CI: lint + tests on every push
+│
+├── src/agent_session_forecast/
+│   ├── config.py                 <- every knob in one place (k values, alpha, bootstrap sizes, seed)
+│   ├── cli.py / __main__.py      <- the command line
+│   ├── pipeline.py               <- the whole study in reading order; start here to see the flow
+│   │
+│   ├── data/
+│   │   ├── loading.py            <- raw .jsonl.zst stream OR Parquet tables -> one row per session
+│   │   └── synthetic.py          <- fake data in the same schema, for tests and demos
+│   │
+│   ├── profiling.py              <- length distribution, per-harness stats, account concentration, censoring
+│   ├── features.py               <- first-k-requests features (no peeking at the future) + account history
+│   ├── models.py                 <- baselines, gradient boosting variants, temporal splitter
+│   │
+│   ├── evaluation/
+│   │   ├── bootstrap.py          <- account-level (cluster) bootstrap and the paired comparison
+│   │   ├── forecasting.py        <- the main experiment: 3 designs x 4 models x several k
+│   │   ├── classification.py     <- "will this session be long?" (AUC, Brier)
+│   │   ├── importance.py         <- which features matter on accounts the model hasn't seen
+│   │   ├── compare.py            <- shared harness: any new predictor, 3 designs, paired vs references
+│   │   └── hazard.py, hierarchical.py, distributional.py, sequence.py,
+│   │       process.py, shift.py, decision.py, mixture.py   <- the optional extra analyses
+│   │
+│   ├── uncertainty/
+│   │   ├── conformal.py          <- 5 prediction-interval methods (+3 group-aware) tested on new accounts
+│   │   └── adaptive.py           <- Adaptive Conformal Inference under drift
+│   │
+│   └── reporting/
+│       ├── summary.py            <- results -> summary.txt text
+│       ├── dashboards.py         <- results -> the two PNG dashboards
+│       ├── figures.py            <- one PNG + PDF per figure, plus dashboard3
+│       └── outputs.py            <- tables/ (CSV + LaTeX), run_info/, folder layout
+│
+├── tests/                        <- no-leakage test, statistics sanity tests, full-pipeline smoke test
+├── docs/
+│   ├── METHODS.md                <- what every analysis does and why, in plain language
+│   └── READING_RESULTS.md        <- every output file and dashboard panel explained
+└── examples/synthetic_run/       <- sample output (synthetic data) so you can see what to expect
+```
+
+---
+
+## What each analysis does (one line each)
+
+- **Profile**: how heavy-tailed are sessions, how concentrated are accounts (Gini, "effective number of accounts"), how much of the length variation is just *who the account is* (ICC).
+- **Forecast**: predict `log(1 + total requests)` from the first *k* requests, for k = 1, 2, 3, 5, 8, 12, 20, with two baselines and two gradient-boosting models.
+- **Paired bootstrap**: re-sample *accounts* (not sessions) to put honest confidence intervals on every comparison, including "how much worse is a new account?".
+- **Account history**: a model that also knows the account's past session lengths, to show how much of the signal is "I recognise this person".
+- **Long-session classifier**: the practical question, "will this go past 20 (or 50) requests?".
+- **Permutation importance**: which features still matter when the account is new.
+- **Conformal intervals**: five ways to build a 90% interval, scored on coverage, width, the *worst* harness and the *unluckiest* accounts.
+- **ACI**: do those intervals hold up as the week drifts?
+
+**Optional extra analyses** (all switchable; see [`docs/METHODS.md`](docs/METHODS.md) sections 11-19):
+
+- **Hazard / survival model** (`--hazard`): predict how long the session keeps going, handling cut-off sessions properly.
+- **Hierarchical model** (`--hierarchical`): account random effects with partial pooling; strangers get the population prediction.
+- **Distributional forecasts** (`--distributional`): quantile GBMs and lognormal heads scored by pinball loss / CRPS.
+- **Group-aware conformal** (`--group-conformal`): leave-accounts-out, CV+ with account folds, and density-ratio-weighted intervals.
+- **Sequence models** (`--sequence`): a GRU (or MLP fallback) and tool n-grams on the request stream.
+- **Process mining** (`--process`): request-state transitions and P(end | state).
+- **Domain-shift methods** (`--shift`): account-balanced weighting, group DRO, dropping account-identifying features.
+- **Decision-focused evaluation** (`--decision`): KV-cache retention cost under a documented cost model.
+- **Latent-class mixture of experts** (`--mixture`).
+
+The reasoning behind each choice is in [`docs/METHODS.md`](docs/METHODS.md).
+How to read the outputs is in [`docs/READING_RESULTS.md`](docs/READING_RESULTS.md).
+
+---
+
+## Things to keep in mind
+
+- **Only sessions longer than k are scored.** To use k requests you must have seen k. Short sessions drop out as k grows, so the error curve falls partly because the target gets easier, not only because the model learns. Compare models *at the same k* (the paired skill scores do), not across k.
+- **Few accounts means noisy account-grouped results.** The summary prints the *effective number of accounts* (1 / Herfindahl index). That number, not the session count, limits what you can conclude.
+- **Censoring is a heuristic.** Sessions are split at week boundaries, so sessions touching the edge are flagged using UTC midnight. Check the printed start/end range, and try `--drop-censored`.
+- **Sub-agent requests aren't counted.** Requests nested inside tool calls are not added to the parent session's length.
+- **`--synthetic` numbers are meaningless.** They only prove the code runs.
+- **The Parquet loader was written from the dataset card, not from the files.** Column names are discovered at run time and printed; check the mapping on first use.
+- **The decision analysis rests on an assumed cost model** (`HOLD_RATE`, `TTL_GRID_S` in `config.py`). Vary it before drawing conclusions.
+
+---
+
+## Development
+
+```bash
+pip install -e ".[data,dev]"     # optional: ".[seq]" adds PyTorch, ".[stats]" adds statsmodels, ".[parquet]" adds pyarrow
+make test      # fast tests (~10 seconds)
+make test-all  # plus the end-to-end run on synthetic data (~1 min)
+make lint      # pyflakes
+make demo      # synthetic run into results_demo/
+make demo-all  # synthetic run with every extra analysis (~5 min)
+```
+
+The tests include one worth knowing about: `test_features_ignore_requests_after_k` scrambles every request after
+the k-th and checks the features don't change. If that ever fails, the model is cheating.
+
+---
+
+## Data and license
+
+Code is MIT licensed (see `LICENSE`). The dataset is not part of this repo and has its own terms:
+check the [dataset card on Hugging Face](https://huggingface.co/datasets/harvardMadsys/freeinference_agentic_trace)
+before using or redistributing it. This project is independent and not affiliated with the dataset's authors.

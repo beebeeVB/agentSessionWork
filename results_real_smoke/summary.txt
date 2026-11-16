@@ -1,0 +1,264 @@
+Sessions: 1,802 | accounts: 141 | harnesses: 12
+Requests per session: median 41, mean 103.5, p90 237, p99 1078, max 5040
+Single-request sessions: 0.0%
+Account concentration: top-1 = 5.7% of sessions, top-3 = 15.8%, Gini = 0.60
+Effective number of independent accounts (1/HHI): 46.6 (of 141)  <- this limits grouped analysis
+Possibly right-censored: 2.3%; left-truncated: 1.4%
+Observed start range: 2026-08-30 00:02:07.326000 -> 2026-09-05 23:37:28.212000 (sanity-check the UTC assumption)
+ICC of log session length across accounts: 0.28 (share of variance explained by WHO the account is)
+
+Forecast MAE on log(1+requests) [lower = better]:
+design         grouped                                           random                                         temporal                                 
+model  baseline_global baseline_harness    gbm gbm_hist baseline_global baseline_harness    gbm gbm_hist baseline_global baseline_harness    gbm gbm_hist
+k                                                                                                                                                        
+1                0.997            1.021  0.986    1.000           0.991            0.965  0.906    0.881           0.949            0.952  0.915    0.889
+3                0.985            0.987  0.955    0.944           0.979            0.951  0.871    0.855           0.937            0.940  0.894    0.876
+5                0.949            0.947  0.885    0.887           0.941            0.908  0.827    0.813           0.905            0.902  0.835    0.822
+12               0.826            0.811  0.781    0.783           0.825            0.792  0.727    0.727           0.778            0.767  0.728    0.741
+
+Account-macro MAE (every account weighted equally), GBM:
+design  grouped  random  temporal
+k                                
+1         1.169   1.063     1.021
+3         1.080   1.005     0.930
+5         1.000   0.957     0.891
+12        0.833   0.785     0.780
+
+Median absolute error in REQUESTS, GBM:
+design  grouped  random  temporal
+k                                
+1          32.8    29.4      30.0
+3          33.2    28.9      28.3
+5          32.4    28.6      31.6
+12         36.8    32.9      32.8
+
+PAIRED: MAE(grouped) - MAE(random), GBM  (positive = new accounts are harder):
+  k= 1: +0.080 [+0.045, +0.119]  p=0.000
+  k= 3: +0.084 [+0.051, +0.129]  p=0.000
+  k= 5: +0.058 [+0.028, +0.100]  p=0.000
+  k=12: +0.054 [+0.024, +0.085]  p=0.000
+
+PAIRED: GBM skill over per-harness median, GROUPED eval:
+  k= 1: skill +3.5% [-0.3%, +7.9%]  p=0.100
+  k= 3: skill +3.2% [-1.1%, +7.5%]  p=0.120
+  k= 5: skill +6.5% [+2.1%, +10.4%]  p=0.000
+  k=12: skill +3.7% [-0.4%, +7.4%]  p=0.087
+
+PAIRED: GBM skill over per-harness median, RANDOM eval:
+  k= 1: skill +6.1% [+2.6%, +10.2%]  p=0.000
+  k= 3: skill +8.4% [+5.1%, +12.1%]  p=0.000
+  k= 5: skill +8.9% [+5.4%, +13.2%]  p=0.000
+  k=12: skill +8.1% [+4.2%, +12.8%]  p=0.000
+
+PAIRED: skill from knowing the harness at all (harness median vs global median), grouped:
+  k= 1: skill -2.4% [-6.2%, +1.4%]  p=0.247
+  k= 3: skill -0.2% [-4.2%, +3.8%]  p=0.880
+  k= 5: skill +0.2% [-4.1%, +4.4%]  p=0.787
+  k=12: skill +1.8% [-3.4%, +6.0%]  p=0.480
+
+PAIRED: skill from account-history features over plain GBM, RANDOM (warm accounts):
+  k= 1: skill +2.7% [+0.4%, +5.5%]  p=0.020
+  k= 3: skill +1.8% [-0.4%, +3.8%]  p=0.080
+  k= 5: skill +1.7% [-0.4%, +3.9%]  p=0.133
+  k=12: skill +0.0% [-1.7%, +2.0%]  p=0.993
+
+PAIRED: same, TEMPORAL (future sessions, mix of warm/new accounts):
+  k= 1: skill +2.8% [-1.2%, +6.9%]  p=0.167
+  k= 3: skill +2.0% [-1.7%, +5.5%]  p=0.300
+  k= 5: skill +1.5% [-1.4%, +5.0%]  p=0.373
+  k=12: skill -1.9% [-6.0%, +1.6%]  p=0.347
+
+P(session > T requests | first k): AUC (GBM / harness-rate baseline) and Brier skill:
+ k  T  design  pos_rate  auc_gbm  auc_baseline  brier_skill
+ 1 20  random     0.704    0.637         0.554        0.026
+ 1 20 grouped     0.704    0.559         0.516       -0.015
+ 1 50  random     0.440    0.671         0.611        0.034
+ 1 50 grouped     0.440    0.597         0.584       -0.022
+ 3 20  random     0.711    0.667         0.560        0.050
+ 3 20 grouped     0.711    0.632         0.534        0.052
+ 3 50  random     0.445    0.687         0.620        0.044
+ 3 50 grouped     0.445    0.634         0.603       -0.006
+ 5 20  random     0.735    0.697         0.561        0.076
+ 5 20 grouped     0.735    0.644         0.506        0.061
+ 5 50  random     0.459    0.699         0.623        0.054
+ 5 50 grouped     0.459    0.635         0.602        0.021
+12 20  random     0.853    0.749         0.537        0.085
+12 20 grouped     0.853    0.690         0.524       -0.081
+12 50  random     0.533    0.711         0.626        0.078
+12 50 grouped     0.533    0.661         0.595        0.015
+
+Top features by grouped permutation importance (k=5):
+harness              0.0645
+frac_tool_reqs       0.0617
+tooldefs0            0.0121
+prompt_last          0.0072
+prompt_first         0.0056
+tool_latency_mean    0.0054
+result_tokens_sum    0.0032
+prompt_growth        0.0025
+
+Conformal (90% target) on NEW accounts, k=5, mean over 6 splits:
+              coverage  width(x, median)  worst_harness  acct_p10
+method                                                           
+split            0.924            52.501          0.846     0.814
+mondrian         0.930            59.697          0.886     0.803
+normalized       0.922            52.890          0.835     0.785
+cqr              0.907            33.514          0.833     0.753
+random_calib     0.909            38.663          0.819     0.811
+  random_calib on SEEN accounts (what it looks like in-house): 90.7%
+
+GROUP-AWARE CONFORMAL (k=5; mean over account re-splits; target coverage 90%):
+  loao / cv_plus_group use train+calibration accounts together; weighted uses the split-conformal split.
+               coverage  width_factor  worst_harness_cov  acct_cov_p10
+method                                                                
+split             0.924        52.501              0.846         0.814
+mondrian          0.930        59.697              0.886         0.803
+normalized        0.922        52.890              0.835         0.785
+cqr               0.907        33.514              0.833         0.753
+random_calib      0.909        38.663              0.819         0.811
+loao              0.919        41.987              0.818         0.786
+cv_plus_group     0.930        43.882              0.851         0.823
+weighted          0.926        47.885              0.850         0.807
+
+Drift test (train 40% / calibrate 20% / stream 40% in time order, k=5):
+  static split-conformal coverage 89.6% | ACI coverage 90.3% (target 90%, 691 streamed sessions)
+
+HAZARD MODEL (landmark discrete-time survival; remaining-length median as point forecast):
+  horizon capped at J=25 requests ahead; a median beyond the cap is J+1
+  [grouped] hazard_gbm vs baseline_harness:
+    k= 3: skill -3.0% [-10.0%, +3.8%] p=0.373
+    k=12: skill -8.3% [-16.6%, -1.3%] p=0.020  <- worse
+  [grouped] hazard_logit vs baseline_harness:
+    k= 3: skill -2.7% [-9.1%, +3.8%] p=0.320
+    k=12: skill -8.1% [-15.5%, -1.4%] p=0.007  <- worse
+  [random] hazard_gbm vs baseline_harness:
+    k= 3: skill -5.9% [-13.3%, +0.5%] p=0.067
+    k=12: skill -10.4% [-16.7%, -4.2%] p=0.007  <- worse
+  [random] hazard_logit vs baseline_harness:
+    k= 3: skill -5.7% [-11.3%, +0.1%] p=0.073
+    k=12: skill -10.6% [-17.7%, -4.5%] p=0.000  <- worse
+  P(lasts > h more requests), hazard_gbm, grouped CV:
+ k  horizon  prevalence   auc  brier_skill_vs_climatology
+ 3        5       0.911 0.766                       0.080
+ 3       10       0.821 0.702                       0.080
+ 3       20       0.668 0.633                       0.034
+12        5       0.908 0.756                       0.055
+12       10       0.818 0.694                       0.042
+12       20       0.695 0.689                       0.066
+
+HIERARCHICAL MODEL (harness fixed effect + account random intercept, partial pooling):
+  variance components (log-length scale):
+ k   method  sigma_u2  sigma_e2  icc_model  icc_raw_profile
+ 3 anova_eb     0.294     1.063      0.216            0.265
+12 anova_eb     0.188     0.767      0.197            0.271
+  [grouped] gbm_hist vs gbm:
+    k= 3: skill +0.7% [-1.3%, +2.8%] p=0.620
+    k=12: skill +1.9% [-0.0%, +4.0%] p=0.060
+  [grouped] gbm_re vs gbm:
+    k= 3: skill +0.0% [+0.0%, +0.0%] p=1.000
+    k=12: skill +0.0% [+0.0%, +0.0%] p=1.000
+  [grouped] hier_eb vs gbm:
+    k= 3: skill -2.0% [-6.4%, +1.6%] p=0.327
+    k=12: skill -3.1% [-7.4%, +1.4%] p=0.140
+  [random] gbm_hist vs gbm:
+    k= 3: skill +1.6% [-0.4%, +3.7%] p=0.140
+    k=12: skill +0.6% [-1.5%, +2.6%] p=0.580
+  [random] gbm_re vs gbm:
+    k= 3: skill +1.3% [+0.5%, +2.3%] p=0.000  <- better
+    k=12: skill +0.8% [+0.2%, +1.4%] p=0.013  <- better
+  [random] hier_eb vs gbm:
+    k= 3: skill -0.5% [-3.6%, +2.2%] p=0.720
+    k=12: skill -1.8% [-4.9%, +1.3%] p=0.300
+
+DISTRIBUTIONAL FORECASTS (quantile grid [0.05, 0.5, 0.95]; lower is better):
+  grid CRPS, account-grouped CV:
+method  lognormal  lognormal_het   qgbm  resid_quantiles
+k                                                       
+3           0.486          0.477  0.469            0.486
+12          0.394          0.394  0.392            0.391
+  coverage of the central interval, account-grouped CV (target 90%):
+method  lognormal  lognormal_het   qgbm  resid_quantiles
+k                                                       
+3           0.873          0.881  0.794            0.870
+12          0.888          0.896  0.785            0.886
+  CRPS skill of lognormal vs resid_quantiles (grouped):
+    k= 3: +0.1% [-0.2%, +0.3%] p=0.480
+    k=12: -0.8% [-1.4%, -0.1%] p=0.027
+  CRPS skill of lognormal_het vs resid_quantiles (grouped):
+    k= 3: +1.8% [+0.6%, +3.2%] p=0.007
+    k=12: -0.7% [-1.8%, +0.7%] p=0.333
+  CRPS skill of qgbm vs resid_quantiles (grouped):
+    k= 3: +3.5% [+0.6%, +7.5%] p=0.040
+    k=12: -0.4% [-3.7%, +2.6%] p=0.800
+
+SEQUENCE MODELS (neural sequence model = seq_mlp; fixed hyper-parameters, not tuned):
+  [grouped] seq_mlp vs gbm:
+    k= 3: skill -2.2% [-5.0%, +0.7%] p=0.153
+  [grouped] tool_ngram_gbm vs gbm:
+    k= 3: skill -0.4% [-1.4%, +0.6%] p=0.420
+    k=12: skill +1.7% [+0.4%, +3.2%] p=0.007  <- better
+  [random] seq_mlp vs gbm:
+    k= 3: skill -6.1% [-8.8%, -3.2%] p=0.000  <- worse
+  [random] tool_ngram_gbm vs gbm:
+    k= 3: skill +0.0% [-0.9%, +1.0%] p=0.913
+    k=12: skill -0.0% [-1.5%, +1.9%] p=0.967
+
+PROCESS MINING (request states from tool calls; first-order transitions):
+   state  n_requests  p_end_given_state  mean_dwell
+    talk        3553              0.115       1.264
+ explore        7169              0.002       2.292
+    edit        2825              0.003       1.582
+     run         267              0.000       1.309
+subagent          72              0.000       1.200
+   error        1243              0.000       1.194
+   other       16282              0.006       2.727
+  [grouped] gbm_states vs gbm:
+    k= 3: skill +0.6% [-0.2%, +1.3%] p=0.193
+    k=12: skill +1.2% [-0.2%, +2.5%] p=0.113
+  [random] gbm_states vs gbm:
+    k= 3: skill -0.3% [-0.9%, +0.4%] p=0.420
+    k=12: skill -0.4% [-1.6%, +1.1%] p=0.687
+
+DOMAIN-SHIFT METHODS (gap = MAE grouped - MAE random; change < 0 = the method closes part of the gap):
+  k= 3 baseline_harness gap +0.036  change vs gbm -0.048 [-0.084, -0.009] p=0.007
+  k=12 baseline_harness gap +0.020  change vs gbm -0.034 [-0.061, -0.008] p=0.013
+  k= 3 gbm             gap +0.084 [+0.047, +0.124]
+  k=12 gbm             gap +0.054 [+0.022, +0.081]
+  k= 3 gbm_balanced    gap +0.062  change vs gbm -0.021 [-0.070, +0.022] p=0.360
+  k=12 gbm_balanced    gap +0.016  change vs gbm -0.037 [-0.061, -0.007] p=0.007
+  k= 3 gbm_dro         gap +0.052  change vs gbm -0.031 [-0.071, +0.009] p=0.100
+  k=12 gbm_dro         gap +0.038  change vs gbm -0.016 [-0.047, +0.009] p=0.260
+  k= 3 gbm_noidentity  gap +0.050  change vs gbm -0.034 [-0.065, -0.008] p=0.007
+  k=12 gbm_noidentity  gap +0.032  change vs gbm -0.022 [-0.046, +0.005] p=0.087
+  k= 3 gbm_sqrt        gap +0.096  change vs gbm +0.012 [-0.030, +0.047] p=0.540
+  k=12 gbm_sqrt        gap +0.019  change vs gbm -0.035 [-0.060, -0.011] p=0.000
+
+DECISION-FOCUSED EVALUATION (KV-cache retention; HOLD_RATE=0.01, break-even gap 100s; TTL grid [0, 10, 30, 60, 120, 300, 600, 1800]):
+  saving = 1 - cost/cost(fixed_ttl); positive = cheaper than the best fixed TTL. Account-grouped CV.
+  k= 3 evict         saving -296.6% [-376.3%, -237.5%]  hit-rate 0.00  <- costlier
+  k= 3 harness_rate  saving +1.9% [-1.9%, +5.4%]  hit-rate 0.91
+  k= 3 hazard_step   saving +2.1% [-1.8%, +5.9%]  hit-rate 0.91
+  k= 3 oracle        saving +34.9% [+32.3%, +38.2%]  hit-rate 0.94  <- cheaper
+  k=12 evict         saving -266.4% [-341.1%, -215.1%]  hit-rate 0.00  <- costlier
+  k=12 harness_rate  saving +0.6% [-3.6%, +3.9%]  hit-rate 0.87
+  k=12 hazard_step   saving +6.7% [+2.2%, +12.7%]  hit-rate 0.89  <- cheaper
+  k=12 oracle        saving +38.3% [+34.5%, +42.6%]  hit-rate 0.93  <- cheaper
+
+LATENT-CLASS MIXTURE OF EXPERTS (classes by BIC inside each training fold):
+  [grouped] mixture_experts vs gbm:
+    k= 3: skill +1.0% [-1.2%, +2.7%] p=0.413
+    k=12: skill -1.1% [-3.2%, +0.8%] p=0.333
+  [random] mixture_experts vs gbm:
+    k= 3: skill -1.0% [-2.6%, +0.8%] p=0.273
+    k=12: skill -1.6% [-3.6%, +0.1%] p=0.093
+  class profiles (k=12, mixture fitted on all data; descriptive):
+ k  n_classes  cls  size  share  median_n_requests  p90_n_requests  mean_log_length  harness_pi  harness_opencode  harness_codex  harness_hermes  harness_oh-my-pi  harness_copilot
+12          3    0   105  0.071               32.0           176.8            3.798       0.676             0.190          0.076           0.038               NaN              NaN
+12          3    2   210  0.141               49.5           281.1            4.107       0.100             0.262            NaN           0.376               NaN            0.052
+12          3    1  1172  0.788               59.0           270.0            4.214       0.103             0.141            NaN           0.467             0.088              NaN
+
+Caveats: target is requests per session; only sessions with > k requests are scored;
+censoring flags are a heuristic (UTC week bounds; try --drop-censored); sub-agent requests not counted;
+read grouped results with the effective number of accounts above in mind.
+
+Run info: 14 figure(s) in figures/, tables in tables/, extras in extras/, provenance in run_info/ (effective accounts 46.6).

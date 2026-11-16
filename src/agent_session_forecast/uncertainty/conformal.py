@@ -5,7 +5,8 @@ normalized, CQR, and the "trap" of calibrating on random sessions of seen accoun
 """
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import GroupKFold
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.model_selection import GroupKFold, StratifiedKFold, cross_val_predict
 
 from .. import config as cfg
 from ..features import features_at_k
@@ -31,8 +32,76 @@ def interval_metrics(y, lo, hi, harness, groups):
     return met, ph
 
 
-def run_conformal(df, k, alpha=cfg.ALPHA, reps=None):
-    """Compare interval methods on UNSEEN accounts (repeat over account splits)."""
+def group_intervals(X, y, groups, tr, ca, te, alpha=cfg.ALPHA):
+    """Group-aware conformal methods (``--group-conformal``), tested on unseen accounts.
+
+    The ordinary methods assume calibration residuals look like test residuals. They do not,
+    because a calibration account's residual is small when the model has seen the account and
+    large for a stranger. These three repair that:
+
+    * ``loao``          leave-accounts-out: calibration residuals are out-of-fold with WHOLE
+                        ACCOUNTS held out, so each one is a "stranger" residual; the final model
+                        is fitted on everything (train + calibration accounts).
+    * ``cv_plus_group`` CV+ (Barber et al. 2021) with account-level folds: an interval per test
+                        point from the K fold models and the out-of-fold residuals.
+    * ``weighted``      weighted split-conformal (Tibshirani et al. 2019): calibration residuals are
+                        reweighted by a classifier-estimated density ratio calibration-vs-test
+                        accounts, correcting for covariate shift between the account groups.
+                        Weights are clipped to [0.05, 20]; an infinite quantile is capped at the
+                        largest calibration residual (a small coverage deficit is possible).
+
+    ``loao`` and ``cv_plus_group`` use train + calibration accounts together (they need no
+    separate calibration set); ``weighted`` uses the same train/calibration split as ``split``.
+    """
+    out = {}
+    pool = np.concatenate([tr, ca])
+    Xp, yp, gp = X.iloc[pool], y[pool], groups[pool]
+    Xte = X.iloc[te]
+    n_folds = min(5, len(set(gp)))
+    folds = list(GroupKFold(n_folds).split(Xp, yp, gp))
+    mus = np.zeros((len(folds), len(te)), dtype=np.float32)
+    oof, fold_of = np.zeros(len(pool)), np.zeros(len(pool), int)
+    for f, (a, b) in enumerate(folds):
+        m = new_gbm().fit(Xp.iloc[a], yp[a])
+        oof[b], fold_of[b], mus[f] = m.predict(Xp.iloc[b]), f, m.predict(Xte)
+    R = np.abs(yp - oof)
+    p_full = new_gbm().fit(Xp, yp).predict(Xte)
+    q = conformal_q(R, alpha)
+    out["loao"] = (p_full - q, p_full + q)
+
+    n = len(R)
+    M = mus[fold_of]                                         # (n_pool, n_test)
+    k_hi, k_lo = min(int(np.ceil((1 - alpha) * (n + 1))), n), max(int(np.floor(alpha * (n + 1))), 1)
+    hi = np.partition(M + R[:, None].astype(np.float32), k_hi - 1, axis=0)[k_hi - 1]
+    lo = np.partition(M - R[:, None].astype(np.float32), k_lo - 1, axis=0)[k_lo - 1]
+    out["cv_plus_group"] = (lo.astype(float), hi.astype(float))
+
+    # weighted split conformal
+    m = new_gbm().fit(X.iloc[tr], y[tr])
+    res_ca, p_te = np.abs(y[ca] - m.predict(X.iloc[ca])), m.predict(Xte)
+    Z = pd.concat([X.iloc[ca], Xte], ignore_index=True)
+    lab = np.r_[np.zeros(len(ca)), np.ones(len(te))].astype(int)
+    clf = HistGradientBoostingClassifier(max_iter=40, max_depth=3, min_samples_leaf=50,
+                                         categorical_features=[0, 1], random_state=0)
+    pr = cross_val_predict(clf, Z, lab, cv=StratifiedKFold(3, shuffle=True, random_state=0),
+                           method="predict_proba")[:, 1]
+    pr = np.clip(pr, 1e-3, 1 - 1e-3)
+    w_all = np.clip(pr / (1 - pr) * (len(ca) / len(te)), 0.05, 20.0)
+    w_ca, w_te = w_all[:len(ca)], w_all[len(ca):]
+    order = np.argsort(res_ca)
+    sres, cw = res_ca[order], np.cumsum(w_ca[order])
+    need = (1 - alpha) * (cw[-1] + w_te)
+    idx = np.searchsorted(cw, need, side="left")
+    qw = sres[np.minimum(idx, len(sres) - 1)]                # capped at the largest residual
+    out["weighted"] = (p_te - qw, p_te + qw)
+    return out
+
+
+def run_conformal(df, k, alpha=cfg.ALPHA, reps=None, group_methods=False):
+    """Compare interval methods on UNSEEN accounts (repeat over account splits).
+
+    group_methods=True also evaluates the group-aware methods on the SAME splits.
+    """
     reps = reps or cfg.CONF_REPS
     out = features_at_k(df, k)
     if out is None:
@@ -98,6 +167,12 @@ def run_conformal(df, k, alpha=cfg.ALPHA, reps=None):
         pB = mB.predict(Xte)
         iv["random_calib"] = (pB - qB, pB + qB)
         cov_seen = float((np.abs(y[i_st] - mB.predict(X.iloc[i_st])) <= qB).mean())
+
+        if group_methods:
+            try:
+                iv.update(group_intervals(X, y, groups, tr, ca, te, alpha))
+            except Exception as e:
+                print(f"    [warn] group-aware conformal failed on split {r} ({type(e).__name__}: {e})")
 
         for name, (lo, hi) in iv.items():
             met, ph = interval_metrics(yte, lo, hi, h_te, groups[te])

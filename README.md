@@ -38,7 +38,8 @@ Then it asks the follow-up questions a careful person would ask:
 
 ## What you get
 
-Run it once and you get two dashboards, a plain-text summary and a handful of CSVs.
+Run it once and you get two dashboards, a plain-text summary and a handful of CSVs. Since v0.2 the output folder is organised as
+`figures/` (PNG + PDF per figure), `tables/` (CSV + LaTeX), `extras/<analysis>/`, `run_info/` (provenance) and, with extras on, `dashboard3.png`.
 
 **Dashboard 1: the profile, the forecast error, the intervals**
 
@@ -48,7 +49,14 @@ Run it once and you get two dashboards, a plain-text summary and a handful of CS
 
 ![dashboard 2](examples/synthetic_run/dashboard2.png)
 
-> These two pictures come from the built-in **synthetic** data, which exists only to test the code.
+**Dashboard 3: the optional extra analyses** (`--all-extras`)
+
+![dashboard 3](examples/synthetic_run/dashboard3.png)
+
+Every figure is also saved on its own (PNG + PDF) in `figures/`; samples are in
+[`examples/synthetic_run/figures/`](examples/synthetic_run/figures/).
+
+> These pictures come from the built-in **synthetic** data, which exists only to test the code.
 > The shapes are illustrative; the numbers say nothing about the real dataset.
 > See [`examples/synthetic_run/summary.txt`](examples/synthetic_run/summary.txt) for the matching text output.
 
@@ -72,7 +80,18 @@ session-forecast --weeks 2026-08-30_2026-09-05
 # 3) Several weeks at once, or a quick peek with a cap:
 session-forecast --weeks 2026-08-23_2026-08-29 2026-08-30_2026-09-05
 session-forecast --weeks 2026-08-30_2026-09-05 --max-sessions 5000
+
+# 4) Everything, on all 16 weeks, from the smaller Parquet tables (real data):
+session-forecast --weeks all --source parquet --feature-set rich --all-extras --out results_real_16wk
+
+# 5) Every extra analysis on fake data (about 5 minutes):
+make demo-all
 ```
+
+**Recommended order for a real run:** first a smoke test
+(`--weeks 2026-08-30_2026-09-05 --max-sessions 2000 --fast --all-extras --feature-set rich`), then one full week, then `--weeks all`.
+The loader has only been tested on synthetic data, so a schema mismatch will show up in the smoke test, not an hour in.
+Do not report numbers from `--fast` or `--synthetic` runs.
 
 `python -m agent_session_forecast ...` works too. Everything lands in `--out` (default `results/`).
 
@@ -84,6 +103,12 @@ session-forecast --weeks 2026-08-30_2026-09-05 --max-sessions 5000
 | `--max-sessions N` | Cap sessions per week for quick tests |
 | `--drop-censored` | Drop sessions that look cut off at a week boundary (sensitivity run) |
 | `--out DIR` | Output directory |
+| `--weeks all` | All 16 weekly folders of the release |
+| `--source {raw,parquet}` | Stream the raw `.jsonl.zst` files (default) or read the flattened Parquet tables (~9 GB instead of ~108 GB) |
+| `--parquet-dir DIR` | Use already-downloaded Parquet files from a local folder |
+| `--feature-set {base,rich}` | `rich` adds trigger / mutation / tool result / latency / sub-agent features (default `base` = original) |
+| `--hazard` `--hierarchical` `--distributional` `--group-conformal` `--sequence` `--process` `--shift` `--decision` `--mixture` | Optional extra analyses (see below); each writes to `<out>/extras/<name>/` |
+| `--all-extras` | Turn all of the extra analyses on |
 
 ---
 
@@ -119,7 +144,7 @@ agent-session-forecast/
 │   ├── pipeline.py               <- the whole study in reading order; start here to see the flow
 │   │
 │   ├── data/
-│   │   ├── loading.py            <- stream the .jsonl.zst trace from Hugging Face -> one row per session
+│   │   ├── loading.py            <- raw .jsonl.zst stream OR Parquet tables -> one row per session
 │   │   └── synthetic.py          <- fake data in the same schema, for tests and demos
 │   │
 │   ├── profiling.py              <- length distribution, per-harness stats, account concentration, censoring
@@ -130,15 +155,20 @@ agent-session-forecast/
 │   │   ├── bootstrap.py          <- account-level (cluster) bootstrap and the paired comparison
 │   │   ├── forecasting.py        <- the main experiment: 3 designs x 4 models x several k
 │   │   ├── classification.py     <- "will this session be long?" (AUC, Brier)
-│   │   └── importance.py         <- which features matter on accounts the model hasn't seen
+│   │   ├── importance.py         <- which features matter on accounts the model hasn't seen
+│   │   ├── compare.py            <- shared harness: any new predictor, 3 designs, paired vs references
+│   │   └── hazard.py, hierarchical.py, distributional.py, sequence.py,
+│   │       process.py, shift.py, decision.py, mixture.py   <- the optional extra analyses
 │   │
 │   ├── uncertainty/
-│   │   ├── conformal.py          <- 5 prediction-interval methods tested on new accounts
+│   │   ├── conformal.py          <- 5 prediction-interval methods (+3 group-aware) tested on new accounts
 │   │   └── adaptive.py           <- Adaptive Conformal Inference under drift
 │   │
 │   └── reporting/
 │       ├── summary.py            <- results -> summary.txt text
-│       └── dashboards.py         <- results -> the two PNG dashboards
+│       ├── dashboards.py         <- results -> the two PNG dashboards
+│       ├── figures.py            <- one PNG + PDF per figure, plus dashboard3
+│       └── outputs.py            <- tables/ (CSV + LaTeX), run_info/, folder layout
 │
 ├── tests/                        <- no-leakage test, statistics sanity tests, full-pipeline smoke test
 ├── docs/
@@ -160,6 +190,18 @@ agent-session-forecast/
 - **Conformal intervals**: five ways to build a 90% interval, scored on coverage, width, the *worst* harness and the *unluckiest* accounts.
 - **ACI**: do those intervals hold up as the week drifts?
 
+**Optional extra analyses** (all switchable; see [`docs/METHODS.md`](docs/METHODS.md) sections 11-19):
+
+- **Hazard / survival model** (`--hazard`): predict how long the session keeps going, handling cut-off sessions properly.
+- **Hierarchical model** (`--hierarchical`): account random effects with partial pooling; strangers get the population prediction.
+- **Distributional forecasts** (`--distributional`): quantile GBMs and lognormal heads scored by pinball loss / CRPS.
+- **Group-aware conformal** (`--group-conformal`): leave-accounts-out, CV+ with account folds, and density-ratio-weighted intervals.
+- **Sequence models** (`--sequence`): a GRU (or MLP fallback) and tool n-grams on the request stream.
+- **Process mining** (`--process`): request-state transitions and P(end | state).
+- **Domain-shift methods** (`--shift`): account-balanced weighting, group DRO, dropping account-identifying features.
+- **Decision-focused evaluation** (`--decision`): KV-cache retention cost under a documented cost model.
+- **Latent-class mixture of experts** (`--mixture`).
+
 The reasoning behind each choice is in [`docs/METHODS.md`](docs/METHODS.md).
 How to read the outputs is in [`docs/READING_RESULTS.md`](docs/READING_RESULTS.md).
 
@@ -172,17 +214,20 @@ How to read the outputs is in [`docs/READING_RESULTS.md`](docs/READING_RESULTS.m
 - **Censoring is a heuristic.** Sessions are split at week boundaries, so sessions touching the edge are flagged using UTC midnight. Check the printed start/end range, and try `--drop-censored`.
 - **Sub-agent requests aren't counted.** Requests nested inside tool calls are not added to the parent session's length.
 - **`--synthetic` numbers are meaningless.** They only prove the code runs.
+- **The Parquet loader was written from the dataset card, not from the files.** Column names are discovered at run time and printed; check the mapping on first use.
+- **The decision analysis rests on an assumed cost model** (`HOLD_RATE`, `TTL_GRID_S` in `config.py`). Vary it before drawing conclusions.
 
 ---
 
 ## Development
 
 ```bash
-pip install -e ".[data,dev]"
-make test      # fast tests (~seconds)
+pip install -e ".[data,dev]"     # optional: ".[seq]" adds PyTorch, ".[stats]" adds statsmodels, ".[parquet]" adds pyarrow
+make test      # fast tests (~10 seconds)
 make test-all  # plus the end-to-end run on synthetic data (~1 min)
 make lint      # pyflakes
 make demo      # synthetic run into results_demo/
+make demo-all  # synthetic run with every extra analysis (~5 min)
 ```
 
 The tests include one worth knowing about: `test_features_ignore_requests_after_k` scrambles every request after

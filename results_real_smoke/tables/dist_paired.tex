@@ -1,0 +1,42 @@
+\begin{tabular}{llllllllllllll}
+\toprule
+k & design & method & vs & score & diff & diff\_lo & diff\_hi & skill & skill\_lo & skill\_hi & p\_boot & n & accounts \\
+\midrule
+3 & random & qgbm & resid\_quantiles & crps\_grid & -0.00323 & -0.0125 & 0.00559 & 0.00729 & -0.0124 & 0.0279 & 0.453 & 1784 & 140 \\
+3 & random & qgbm & resid\_quantiles & interval\_score & -0.0603 & -0.273 & 0.16 & 0.0132 & -0.0353 & 0.0598 & 0.593 & 1784 & 140 \\
+3 & random & lognormal & resid\_quantiles & crps\_grid & 0.000311 & -0.000449 & 0.000974 & -0.000701 & -0.00217 & 0.00101 & 0.353 & 1784 & 140 \\
+3 & random & lognormal & resid\_quantiles & interval\_score & 0.0137 & -0.00749 & 0.035 & -0.003 & -0.00768 & 0.00154 & 0.18 & 1784 & 140 \\
+3 & random & lognormal\_het & resid\_quantiles & crps\_grid & -0.00299 & -0.00782 & 0.00105 & 0.00674 & -0.00227 & 0.0175 & 0.193 & 1784 & 140 \\
+3 & random & lognormal\_het & resid\_quantiles & interval\_score & -0.0852 & -0.231 & 0.0717 & 0.0186 & -0.0156 & 0.0489 & 0.34 & 1784 & 140 \\
+3 & grouped & qgbm & resid\_quantiles & crps\_grid & -0.0171 & -0.0381 & -0.00267 & 0.0351 & 0.00573 & 0.0752 & 0.04 & 1784 & 140 \\
+3 & grouped & qgbm & resid\_quantiles & interval\_score & -0.238 & -0.606 & 0.14 & 0.0472 & -0.027 & 0.115 & 0.24 & 1784 & 140 \\
+3 & grouped & lognormal & resid\_quantiles & crps\_grid & -0.000477 & -0.0017 & 0.000758 & 0.00098 & -0.00164 & 0.00333 & 0.48 & 1784 & 140 \\
+3 & grouped & lognormal & resid\_quantiles & interval\_score & -0.0275 & -0.0688 & 0.00771 & 0.00544 & -0.00157 & 0.0129 & 0.0933 & 1784 & 140 \\
+3 & grouped & lognormal\_het & resid\_quantiles & crps\_grid & -0.00889 & -0.0168 & -0.00276 & 0.0183 & 0.00602 & 0.0325 & 0.00667 & 1784 & 140 \\
+3 & grouped & lognormal\_het & resid\_quantiles & interval\_score & -0.28 & -0.499 & -0.0739 & 0.0554 & 0.0159 & 0.0913 & 0 & 1784 & 140 \\
+3 & temporal & qgbm & resid\_quantiles & crps\_grid & -0.0173 & -0.0308 & -0.00167 & 0.0385 & 0.00394 & 0.0661 & 0.0333 & 535 & 93 \\
+3 & temporal & qgbm & resid\_quantiles & interval\_score & -0.425 & -0.774 & -0.0137 & 0.0925 & 0.00308 & 0.165 & 0.04 & 535 & 93 \\
+3 & temporal & lognormal & resid\_quantiles & crps\_grid & -4.1e-05 & -0.00113 & 0.00119 & 9.09e-05 & -0.00249 & 0.00263 & 0.847 & 535 & 93 \\
+3 & temporal & lognormal & resid\_quantiles & interval\_score & -0.00105 & -0.0287 & 0.0332 & 0.000229 & -0.00691 & 0.0063 & 0.98 & 535 & 93 \\
+3 & temporal & lognormal\_het & resid\_quantiles & crps\_grid & -0.00118 & -0.0103 & 0.00764 & 0.00262 & -0.0166 & 0.0228 & 0.84 & 535 & 93 \\
+3 & temporal & lognormal\_het & resid\_quantiles & interval\_score & -0.0352 & -0.284 & 0.219 & 0.00768 & -0.0484 & 0.06 & 0.84 & 535 & 93 \\
+12 & random & qgbm & resid\_quantiles & crps\_grid & 0.000255 & -0.00865 & 0.0112 & -0.00069 & -0.0298 & 0.0237 & 0.92 & 1487 & 125 \\
+12 & random & qgbm & resid\_quantiles & interval\_score & -0.067 & -0.234 & 0.175 & 0.0175 & -0.0429 & 0.0613 & 0.587 & 1487 & 125 \\
+12 & random & lognormal & resid\_quantiles & crps\_grid & 0.000736 & -0.00094 & 0.00214 & -0.00199 & -0.00578 & 0.00252 & 0.393 & 1487 & 125 \\
+12 & random & lognormal & resid\_quantiles & interval\_score & 0.00874 & -0.0293 & 0.0508 & -0.00228 & -0.013 & 0.00783 & 0.553 & 1487 & 125 \\
+12 & random & lognormal\_het & resid\_quantiles & crps\_grid & -0.00286 & -0.00654 & 0.000881 & 0.00773 & -0.00234 & 0.0178 & 0.133 & 1487 & 125 \\
+12 & random & lognormal\_het & resid\_quantiles & interval\_score & -0.099 & -0.207 & 0.0243 & 0.0259 & -0.00636 & 0.0528 & 0.0933 & 1487 & 125 \\
+12 & grouped & qgbm & resid\_quantiles & crps\_grid & 0.00137 & -0.00994 & 0.0146 & -0.00351 & -0.0372 & 0.0259 & 0.8 & 1487 & 125 \\
+12 & grouped & qgbm & resid\_quantiles & interval\_score & 0.0536 & -0.241 & 0.429 & -0.0134 & -0.104 & 0.0599 & 0.76 & 1487 & 125 \\
+12 & grouped & lognormal & resid\_quantiles & crps\_grid & 0.0031 & 0.000608 & 0.00526 & -0.00793 & -0.0138 & -0.00145 & 0.0267 & 1487 & 125 \\
+12 & grouped & lognormal & resid\_quantiles & interval\_score & 0.00307 & -0.0391 & 0.0408 & -0.000765 & -0.0102 & 0.00959 & 0.927 & 1487 & 125 \\
+12 & grouped & lognormal\_het & resid\_quantiles & crps\_grid & 0.00255 & -0.00283 & 0.00693 & -0.00652 & -0.0178 & 0.00722 & 0.333 & 1487 & 125 \\
+12 & grouped & lognormal\_het & resid\_quantiles & interval\_score & -0.0135 & -0.147 & 0.113 & 0.00336 & -0.0278 & 0.0357 & 0.927 & 1487 & 125 \\
+12 & temporal & qgbm & resid\_quantiles & crps\_grid & -0.00624 & -0.0182 & 0.00536 & 0.0169 & -0.0146 & 0.0502 & 0.293 & 446 & 85 \\
+12 & temporal & qgbm & resid\_quantiles & interval\_score & -0.219 & -0.512 & 0.0995 & 0.0575 & -0.0262 & 0.134 & 0.173 & 446 & 85 \\
+12 & temporal & lognormal & resid\_quantiles & crps\_grid & 0.00133 & -0.000741 & 0.00336 & -0.0036 & -0.00922 & 0.00196 & 0.193 & 446 & 85 \\
+12 & temporal & lognormal & resid\_quantiles & interval\_score & 0.00441 & -0.056 & 0.0579 & -0.00116 & -0.0157 & 0.0142 & 0.733 & 446 & 85 \\
+12 & temporal & lognormal\_het & resid\_quantiles & crps\_grid & 0.00258 & -0.00318 & 0.00867 & -0.00699 & -0.0226 & 0.00876 & 0.373 & 446 & 85 \\
+12 & temporal & lognormal\_het & resid\_quantiles & interval\_score & 0.0419 & -0.14 & 0.25 & -0.011 & -0.0643 & 0.0359 & 0.667 & 446 & 85 \\
+\bottomrule
+\end{tabular}

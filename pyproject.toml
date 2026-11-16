@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-session-forecast"
-version = "0.1.0"
+version = "0.2.0"
 description = "Early forecasting of LLM agent session length, with honest uncertainty (account-grouped evaluation, paired bootstraps, conformal intervals)."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -13,12 +13,16 @@ dependencies = [
     "numpy>=1.22",
     "pandas>=1.5",
     "scikit-learn>=1.1",
+    "scipy>=1.8",
     "matplotlib>=3.5",
 ]
 
 [project.optional-dependencies]
 # only needed to read the real trace from Hugging Face (not for --synthetic)
 data = ["zstandard", "huggingface_hub"]
+parquet = ["pyarrow", "huggingface_hub"]       # --source parquet / --parquet-dir
+seq = ["torch"]                                  # --sequence uses a GRU (MLP fallback without it)
+stats = ["statsmodels"]                          # --hierarchical REML cross-check
 dev = ["pytest", "pyflakes"]
 
 [project.scripts]

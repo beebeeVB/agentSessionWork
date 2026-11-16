@@ -45,5 +45,5 @@ def paired_boot(ea, eb, groups, B=None):
         diff_lo=np.percentile(diff, 2.5), diff_hi=np.percentile(diff, 97.5),
         skill=1 - sa.sum() / sb.sum(),
         skill_lo=np.percentile(skill, 2.5), skill_hi=np.percentile(skill, 97.5),
-        p_boot=min(1.0, 2 * min((diff > 0).mean(), (diff < 0).mean())),
+        p_boot=1.0 if not diff.any() else min(1.0, 2 * min((diff > 0).mean(), (diff < 0).mean())),
         n=int(n.sum()), accounts=len(t))

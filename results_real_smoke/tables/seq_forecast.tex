@@ -1,0 +1,27 @@
+\begin{tabular}{llllllll}
+\toprule
+k & design & model & n & accounts & mae\_log & ci\_lo & ci\_hi \\
+\midrule
+3 & random & gbm & 1784 & 140 & 0.871 & 0.821 & 0.937 \\
+3 & random & baseline\_harness & 1784 & 140 & 0.951 & 0.878 & 1.02 \\
+3 & random & seq\_mlp & 1784 & 140 & 0.924 & 0.87 & 0.991 \\
+3 & random & tool\_ngram\_gbm & 1784 & 140 & 0.871 & 0.821 & 0.919 \\
+3 & grouped & gbm & 1784 & 140 & 0.955 & 0.864 & 1.04 \\
+3 & grouped & baseline\_harness & 1784 & 140 & 0.987 & 0.924 & 1.06 \\
+3 & grouped & seq\_mlp & 1784 & 140 & 0.976 & 0.913 & 1.03 \\
+3 & grouped & tool\_ngram\_gbm & 1784 & 140 & 0.959 & 0.895 & 1.03 \\
+3 & temporal & gbm & 535 & 93 & 0.894 & 0.813 & 0.988 \\
+3 & temporal & baseline\_harness & 535 & 93 & 0.94 & 0.853 & 1.04 \\
+3 & temporal & seq\_mlp & 535 & 93 & 0.933 & 0.854 & 1.01 \\
+3 & temporal & tool\_ngram\_gbm & 535 & 93 & 0.894 & 0.821 & 0.977 \\
+12 & random & gbm & 1487 & 125 & 0.727 & 0.683 & 0.781 \\
+12 & random & baseline\_harness & 1487 & 125 & 0.792 & 0.745 & 0.852 \\
+12 & random & tool\_ngram\_gbm & 1487 & 125 & 0.728 & 0.675 & 0.772 \\
+12 & grouped & gbm & 1487 & 125 & 0.781 & 0.733 & 0.835 \\
+12 & grouped & baseline\_harness & 1487 & 125 & 0.811 & 0.751 & 0.883 \\
+12 & grouped & tool\_ngram\_gbm & 1487 & 125 & 0.768 & 0.724 & 0.833 \\
+12 & temporal & gbm & 446 & 85 & 0.728 & 0.661 & 0.832 \\
+12 & temporal & baseline\_harness & 446 & 85 & 0.767 & 0.69 & 0.852 \\
+12 & temporal & tool\_ngram\_gbm & 446 & 85 & 0.724 & 0.659 & 0.81 \\
+\bottomrule
+\end{tabular}

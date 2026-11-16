@@ -15,6 +15,11 @@ Everything a run writes to `--out/`, and how to read it.
 | `results_importance.csv` | Permutation importance on held-out accounts |
 | `results_conformal.csv` | Per account-split results for the 5 interval methods |
 | `results_harness.csv` | Count, median and mean length per harness |
+| `figures/` | One PNG (200 dpi) and one PDF per figure (see "Figures" below); a figure is skipped if its analysis did not run |
+| `tables/` | Every table as CSV **and** LaTeX (`.tex`, booktabs style) ready for a paper |
+| `extras/<name>/` | CSVs of each optional analysis (`--hazard`, `--hierarchical`, ...) |
+| `dashboard3.png` | One page collecting the panels of every extra analysis that ran |
+| `run_info/run_info.{json,txt}` | Provenance: command line, git commit, library versions, seed, config values, weeks, session / account / effective-account counts, timings, and any analysis that failed |
 
 ## `summary.txt`, block by block
 
@@ -61,3 +66,31 @@ Everything a run writes to `--out/`, and how to read it.
 - **Worst-harness or 10th-percentile coverage far below 90%**: the intervals are unfair even if the average is fine.
 - **Conformal width factor in the tens**: a valid interval that may be too loose to use.
 - **Few effective accounts**: every grouped conclusion needs wide error bars; believe the CIs.
+
+## Figures (`figures/`)
+
+| File | Shows | Read it as |
+|---|---|---|
+| `fig01_error_vs_k` | GBM and harness baseline error vs k for the 3 designs | Band = cluster-bootstrap CI. Red above blue = new accounts are harder |
+| `fig02_gap_vs_k` | MAE(grouped) - MAE(random), paired CI | Above 0 with the bar clear of 0 = random CV was too optimistic |
+| `fig03_skill_vs_harness` | Skill of the GBM (left) and of the new models (right) vs the per-harness median | Above 0 = better than that baseline |
+| `fig04_account_concentration` | Lorenz curve, Gini, effective number of accounts | The effective number limits every grouped conclusion |
+| `fig05_conformal` | Coverage vs width; worst-harness and 10th-percentile-account coverage, including group-aware methods | Want coverage near 90% **and** narrow. `random_calib` is the control |
+| `fig06_aci_drift` | Rolling coverage of static vs adaptive intervals | Static drifting from 0.9 while ACI holds = drift matters |
+| `fig07_hazard` | Predicted vs observed survival; predicted vs actual remaining length | Curves on top of each other = calibrated |
+| `fig08_hierarchical` | Raw vs shrunken account effects; model ICC vs raw ICC | Small accounts pulled toward 0 = partial pooling working |
+| `fig09_distributional` | Quantile calibration; grid CRPS by method | Points on the diagonal = calibrated; lower CRPS = better |
+| `fig10_shift` | Change in the new-account gap vs plain GBM | Left of 0 with CI clear of 0 = the method closes part of the gap |
+| `fig11_process` | Transition matrix between request states; P(end | state) | Rows are "current state"; look for states that precede the end |
+| `fig12_decision` | Cache-retention saving vs the best fixed TTL (symlog axis) | Above 0 = cheaper. `oracle` is a lower bound, not a policy |
+| `fig13_mixture` | Latent class sizes, length and harness mix | Classes should differ in length to be worth having |
+| `fig14_weekly_drift` | Session length and harness mix by week (only with 2+ weeks) | Shifts here mean pooling weeks needs care |
+| `fig15_extras_vs_gbm` | Skill of every new model vs the plain GBM, grouped and random | Most bars straddling 0 = no evidence of gain |
+
+## Extra sections of `summary.txt`
+
+Each enabled analysis adds a block (HAZARD MODEL, HIERARCHICAL MODEL, DISTRIBUTIONAL FORECASTS, GROUP-AWARE CONFORMAL,
+SEQUENCE MODELS, PROCESS MINING, DOMAIN-SHIFT METHODS, DECISION-FOCUSED EVALUATION, LATENT-CLASS MIXTURE). Lines marked
+`<- better` / `<- worse` are those whose 95% CI excludes 0; everything else is "not distinguishable from no effect".
+If an analysis crashed, a final block `ANALYSES THAT FAILED IN THIS RUN` names it and the error; the rest is unaffected.
+**With `--synthetic` every number is meaningless.** A tie with the GBM is a normal result for the neural and mixture models.

@@ -1,0 +1,97 @@
+{
+  "command_line": "session-forecast --weeks 2026-08-30_2026-09-05 --max-sessions 2000 --fast --all-extras --feature-set rich --out results_real_smoke",
+  "started_utc": "2026-11-15T18:32:52+00:00",
+  "finished_utc": "2026-11-15T18:46:17+00:00",
+  "synthetic": false,
+  "fast_mode": true,
+  "git_commit": "092855e84d51bcc4f598c99ee8a3493867e935a3",
+  "versions": {
+    "python": "3.13.2",
+    "platform": "macOS-15.8.1-x86_64-i386-64bit-Mach-O",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "sklearn": "1.9.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "statsmodels": null,
+    "torch": null,
+    "pyarrow": null,
+    "zstandard": "0.25.0",
+    "huggingface_hub": "2.4.0"
+  },
+  "random_seed": 0,
+  "weeks": [
+    "2026-08-30_2026-09-05"
+  ],
+  "source": "raw",
+  "drop_censored": false,
+  "n_sessions": 1802,
+  "n_accounts": 141,
+  "effective_n_accounts": 46.63646808755098,
+  "n_censored_right": 42,
+  "n_censored_left": 25,
+  "config": {
+    "K_LIST": [
+      1,
+      3,
+      5,
+      12
+    ],
+    "EXTRA_KS": [
+      3,
+      12
+    ],
+    "KMAX": 20,
+    "ALPHA": 0.1,
+    "BOOT": 100,
+    "PAIR_BOOT": 300,
+    "CONF_REPS": 6,
+    "FEATURE_SET": "rich",
+    "HAZARD_J": 25,
+    "QUANTILES": [
+      0.05,
+      0.5,
+      0.95
+    ],
+    "SEQ_EPOCHS": 8,
+    "DRO_ROUNDS": 2,
+    "MIX_CLASSES": [
+      2,
+      3
+    ],
+    "HOLD_RATE": 0.01,
+    "TTL_GRID_S": [
+      0,
+      10,
+      30,
+      60,
+      120,
+      300,
+      600,
+      1800
+    ],
+    "WEIGHT_MODE": "resample"
+  },
+  "extras_enabled": [
+    "hazard",
+    "hierarchical",
+    "distributional",
+    "sequence",
+    "process",
+    "shift",
+    "decision",
+    "mixture",
+    "group_conformal"
+  ],
+  "analyses_failed": [],
+  "extra_analysis_seconds": {
+    "hazard": 17.7,
+    "hierarchical": 47.4,
+    "distributional": 79.7,
+    "sequence": 25.2,
+    "process": 22.5,
+    "shift": 66.0,
+    "decision": 3.7,
+    "mixture": 39.7
+  }
+}

@@ -81,3 +81,14 @@ CAVEATS = [
     "censoring flags are a heuristic (UTC week bounds; try --drop-censored); sub-agent requests not counted;",
     "read grouped results with the effective number of accounts above in mind.",
 ]
+
+
+def group_conformal_table(conf, k):
+    """Group-aware conformal methods next to the five originals (same splits)."""
+    from .. import config as cfg
+    allm = cfg.CONF_METHODS + cfg.GROUP_CONF_METHODS
+    t = conf.groupby("method")[["coverage", "width_factor", "worst_harness_cov", "acct_cov_p10"]].mean()
+    t = t.reindex([m for m in allm if m in t.index])
+    return ["", f"GROUP-AWARE CONFORMAL (k={k}; mean over account re-splits; target coverage {1 - cfg.ALPHA:.0%}):",
+            "  loao / cv_plus_group use train+calibration accounts together; weighted uses the split-conformal split.",
+            t.round(3).to_string()]

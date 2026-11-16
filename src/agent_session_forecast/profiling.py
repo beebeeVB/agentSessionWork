@@ -31,6 +31,22 @@ def gini(x):
     return (n + 1 - 2 * (cum / cum[-1]).sum()) / n
 
 
+def icc_oneway(y, groups):
+    """One-way ANOVA intraclass correlation of y across groups (None if undefined)."""
+    y = pd.Series(np.asarray(y, dtype=float))
+    g = pd.Series(np.asarray(groups))
+    grp = y.groupby(g.values)
+    n_i, m_i = grp.size(), grp.mean()
+    k, N = len(n_i), len(y)
+    if k > 1 and N > k:
+        ssb = (n_i * (m_i - y.mean()) ** 2).sum()
+        ssw = ((y.values - g.map(m_i).values) ** 2).sum()
+        msb, msw = ssb / (k - 1), ssw / (N - k)
+        n0 = (N - (n_i ** 2).sum() / N) / (k - 1)
+        return max(0.0, (msb - msw) / (msb + (n0 - 1) * msw))
+    return None
+
+
 def profile(df, out):
     L = []
     per_user = df.groupby("user_id").size().sort_values(ascending=False)
@@ -51,15 +67,8 @@ def profile(df, out):
              f"{pd.to_datetime(df.start_ms.max(), unit='ms')} (sanity-check the UTC assumption)")
 
     y = np.log1p(df.n_requests)
-    grp = df.assign(y=y).groupby("user_id")["y"]
-    n_i, m_i = grp.size(), grp.mean()
-    k, N = len(n_i), len(df)
-    if k > 1 and N > k:
-        ssb = (n_i * (m_i - y.mean()) ** 2).sum()
-        ssw = ((y - df["user_id"].map(m_i)) ** 2).sum()
-        msb, msw = ssb / (k - 1), ssw / (N - k)
-        n0 = (N - (n_i ** 2).sum() / N) / (k - 1)
-        icc = max(0.0, (msb - msw) / (msb + (n0 - 1) * msw))
+    icc = icc_oneway(y.values, df["user_id"].values)
+    if icc is not None:
         L.append(f"ICC of log session length across accounts: {icc:.2f} "
                  f"(share of variance explained by WHO the account is)")
 

@@ -1,4 +1,4 @@
-.PHONY: install test test-all lint demo clean
+.PHONY: install test test-all lint demo demo-all clean
 
 install:
 	pip install -e ".[data,dev]"
@@ -15,5 +15,8 @@ lint:
 demo:            ## synthetic run into results_demo/
 	session-forecast --synthetic --fast --out results_demo
 
+demo-all:        ## synthetic run with EVERY extra analysis (~5 min) into results_demo_all/
+	session-forecast --synthetic --fast --all-extras --feature-set rich --out results_demo_all
+
 clean:
-	rm -rf results results_demo .pytest_cache build dist *.egg-info
+	rm -rf results results_demo results_demo_all .pytest_cache build dist *.egg-info
