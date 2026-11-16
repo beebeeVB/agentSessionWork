@@ -14,9 +14,15 @@ from ..models import new_gbm, new_gbm_q, new_scale_gbm
 
 
 def conformal_q(scores, alpha):
-    n = len(scores)
-    level = min(1.0, np.ceil((n + 1) * (1 - alpha)) / n)
-    return np.quantile(scores, level, method="higher")
+    """The ceil((n+1)(1-alpha))-th smallest score (the split-conformal quantile).
+
+    If that rank exceeds n (too few calibration points for the requested level) the largest score
+    is returned instead of +inf, so intervals stay finite; coverage can then fall slightly short
+    (documented limitation)."""
+    s = np.sort(np.asarray(scores, float))
+    n = len(s)
+    k = int(np.ceil((n + 1) * (1 - alpha)))
+    return s[min(k, n) - 1]
 
 
 def interval_metrics(y, lo, hi, harness, groups):

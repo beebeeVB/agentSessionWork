@@ -30,6 +30,7 @@ src/agent_session_forecast/evaluation/hierarchical.py
 src/agent_session_forecast/evaluation/importance.py
 src/agent_session_forecast/evaluation/mixture.py
 src/agent_session_forecast/evaluation/process.py
+src/agent_session_forecast/evaluation/robustness.py
 src/agent_session_forecast/evaluation/sequence.py
 src/agent_session_forecast/evaluation/shift.py
 src/agent_session_forecast/reporting/__init__.py
@@ -45,4 +46,5 @@ tests/test_extras_units.py
 tests/test_features.py
 tests/test_loading.py
 tests/test_pipeline_smoke.py
+tests/test_statistical_guarantees.py
 tests/test_statistics.py

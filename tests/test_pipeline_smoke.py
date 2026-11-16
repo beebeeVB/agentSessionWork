@@ -53,11 +53,14 @@ def test_every_extra_analysis_and_the_output_layout(tmp_path, monkeypatch):
     assert "ANALYSES THAT FAILED" not in text, text[text.index("ANALYSES THAT FAILED"):][:500]
     extras = set(os.listdir(tmp_path / "extras"))
     assert extras == {"hazard", "hierarchical", "distributional", "sequence", "process", "shift",
-                      "decision", "mixture"}
+                      "decision", "mixture", "robustness"}
     figs = {f for f in os.listdir(tmp_path / "figures") if f.endswith(".png")}
-    assert {"fig01_error_vs_k.png", "fig05_conformal.png", "fig07_hazard.png"} <= figs
+    assert {"fig01_error_vs_k.png", "fig05_conformal.png", "fig07_hazard.png", "fig10_shift.png",
+            "fig12_decision.png", "fig16_robustness.png"} <= figs
     assert all((tmp_path / "figures" / f.replace(".png", ".pdf")).exists() for f in figs)
     assert any(f.endswith(".tex") for f in os.listdir(tmp_path / "tables"))
     info = json.load(open(tmp_path / "run_info" / "run_info.json"))
     assert info["synthetic"] and set(info["extras_enabled"]) == set(ALL_FLAGS)
     assert "GROUP-AWARE CONFORMAL" in text and "DECISION-FOCUSED" in text
+    assert "SENSITIVITY of the hazard_step saving" in text and "ROBUSTNESS TO HEAVY ACCOUNTS" in text
+    assert "new-account skill vs gbm" in text

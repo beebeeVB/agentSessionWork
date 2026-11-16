@@ -80,11 +80,12 @@ Everything a run writes to `--out/`, and how to read it.
 | `fig07_hazard` | Predicted vs observed survival; predicted vs actual remaining length | Curves on top of each other = calibrated |
 | `fig08_hierarchical` | Raw vs shrunken account effects; model ICC vs raw ICC | Small accounts pulled toward 0 = partial pooling working |
 | `fig09_distributional` | Quantile calibration; grid CRPS by method | Points on the diagonal = calibrated; lower CRPS = better |
-| `fig10_shift` | Change in the new-account gap vs plain GBM | Left of 0 with CI clear of 0 = the method closes part of the gap |
+| `fig10_shift` | Left: change in the new-account gap vs plain GBM. Right: skill vs plain GBM on a new account | A smaller gap (left) is NOT an improvement by itself: it also happens when a method just makes random-CV accuracy worse. Only the right panel (> 0, CI clear of 0) says the method helps on new accounts |
 | `fig11_process` | Transition matrix between request states; P(end | state) | Rows are "current state"; look for states that precede the end |
-| `fig12_decision` | Cache-retention saving vs the best fixed TTL (symlog axis) | Above 0 = cheaper. `oracle` is a lower bound, not a policy |
+| `fig12_decision` | Left: cache-retention saving vs the best fixed TTL (symlog axis). Right: the `hazard_step` saving as the assumed cost model changes | Above 0 = cheaper. `oracle` is a lower bound, not a policy. The cost model is an assumption: trust a saving only if the right panel stays above 0 over the plausible range |
 | `fig13_mixture` | Latent class sizes, length and harness mix | Classes should differ in length to be worth having |
 | `fig14_weekly_drift` | Session length and harness mix by week (only with 2+ weeks) | Shifts here mean pooling weeks needs care |
+| `fig16_robustness` | Gap and new-account skill after dropping the 1/3/10 heaviest accounts, or capping every account at 50 sessions | Estimates that stay on the same side of 0 across rows = the headline is not driven by a few accounts. The row labels give the effective number of accounts |
 | `fig15_extras_vs_gbm` | Skill of every new model vs the plain GBM, grouped and random | Most bars straddling 0 = no evidence of gain |
 
 ## Extra sections of `summary.txt`

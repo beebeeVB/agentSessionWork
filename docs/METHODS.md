@@ -194,6 +194,9 @@ generative model. *Check the keyword lists against the real tool categories* bef
 
 ## 18. Domain-shift methods (`--shift`)
 
+> A smaller grouped-minus-random gap is not an improvement: it also appears when a method makes random-split accuracy worse. `shift_gap.csv` therefore includes `newacct_skill_vs_gbm` (paired, account-grouped); judge methods by that column.
+
+
 Does the account-grouped penalty shrink if the GBM is trained to generalise? Methods: account-balanced weights (1/n),
 square-root weights, group DRO (exponentiated-gradient reweighting of accounts with out-of-fold losses), and dropping the
 quarter of features that most separate accounts (ANOVA F). The headline is the **change in the grouped-minus-random gap vs the
@@ -214,6 +217,24 @@ requests are stored, so k must be below 20. [`evaluation/decision.py`]
 classes by BIC, train one GBM expert per class (hard assignment, classes with < 60 sessions fall back to the global model),
 predict with the posterior-weighted average. Class profiles (size, length quantiles, harness mix) are written for
 interpretation. [`evaluation/mixture.py`]
+
+## 19b. Cost-model sensitivity (inside `--decision`)
+
+The retention cost model has two assumed numbers: the price of holding a prefix per second
+(`HOLD_RATE`) and, implicitly, the price of a miss (one prefix recompute). Their ratio is the
+break-even gap 1/HOLD_RATE. `decision_sensitivity.csv` re-scores every policy for break-even gaps of
+20, 50, 100, 200 and 500 s; the forecasting models are fitted once per fold (they do not depend on the
+cost model), only the decision step is repeated. The summary prints, for the hazard policy, in how many
+(k, cost-model) cells it is significantly cheaper / costlier than the best fixed TTL. Report the whole
+sweep, not the single default.
+
+## 19c. Robustness to heavy accounts (`--robustness`)
+
+Grouped analyses rest on the effective number of accounts (1/HHI), not the raw count. This analysis
+re-runs the whole cross-validation (random and account-grouped) after dropping the 1, 3 and 10 heaviest
+accounts, and after capping every account at 50 sessions (fixed random subsample), and reports the
+new-account gap and the GBM's new-account skill with paired cluster-bootstrap CIs, plus
+`robustness_stability.csv` (largest change from the full data, and whether the CIs still exclude 0).
 
 ## 20. Data sources
 

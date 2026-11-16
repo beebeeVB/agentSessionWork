@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: agent-session-forecast
-Version: 0.2.0
+Version: 0.2.1
 Summary: Early forecasting of LLM agent session length, with honest uncertainty (account-grouped evaluation, paired bootstraps, conformal intervals).
 License: MIT
 Requires-Python: >=3.9
@@ -135,7 +135,7 @@ Do not report numbers from `--fast` or `--synthetic` runs.
 | `--source {raw,parquet}` | Stream the raw `.jsonl.zst` files (default) or read the flattened Parquet tables (~9 GB instead of ~108 GB) |
 | `--parquet-dir DIR` | Use already-downloaded Parquet files from a local folder |
 | `--feature-set {base,rich}` | `rich` adds trigger / mutation / tool result / latency / sub-agent features (default `base` = original) |
-| `--hazard` `--hierarchical` `--distributional` `--group-conformal` `--sequence` `--process` `--shift` `--decision` `--mixture` | Optional extra analyses (see below); each writes to `<out>/extras/<name>/` |
+| `--hazard` `--hierarchical` `--distributional` `--group-conformal` `--sequence` `--process` `--shift` `--decision` `--mixture` `--robustness` | Optional extra analyses (see below); each writes to `<out>/extras/<name>/` |
 | `--all-extras` | Turn all of the extra analyses on |
 
 ---
@@ -228,6 +228,7 @@ agent-session-forecast/
 - **Process mining** (`--process`): request-state transitions and P(end | state).
 - **Domain-shift methods** (`--shift`): account-balanced weighting, group DRO, dropping account-identifying features.
 - **Decision-focused evaluation** (`--decision`): KV-cache retention cost under a documented cost model.
+- **Robustness to heavy accounts** (`--robustness`): drop/cap the biggest accounts and re-run the headline gap and skill.
 - **Latent-class mixture of experts** (`--mixture`).
 
 The reasoning behind each choice is in [`docs/METHODS.md`](docs/METHODS.md).

@@ -17,6 +17,11 @@ the gap shrinks, with a paired account-level bootstrap:
 
 The headline numbers are in ``shift_gap.csv``: for each method, the gap (grouped - random) and how
 it differs from the plain GBM's gap (negative = the method closes part of the gap).
+
+CAUTION: a smaller gap is NOT the same as a better model. The gap shrinks if the method makes
+RANDOM-split accuracy worse, even when it does nothing for new accounts. So ``shift_gap.csv`` also
+carries ``newacct_skill_vs_gbm`` (paired, account-grouped design: 1 - MAE(method)/MAE(gbm); positive
+= better on a new account). That column is the one that says whether a method actually helps.
 """
 import os
 
@@ -131,6 +136,11 @@ def gap_table(store):
                 if r:
                     rec.update(gap_change_vs_gbm=r["diff"], gap_change_lo=r["diff_lo"],
                                gap_change_hi=r["diff_hi"], gap_change_p=r["p_boot"])
+                if ("grouped", "gbm") in E:
+                    r2 = paired_boot(E[("grouped", m)], E[("grouped", "gbm")], g)
+                    if r2:
+                        rec.update(newacct_skill_vs_gbm=r2["skill"], newacct_skill_lo=r2["skill_lo"],
+                                   newacct_skill_hi=r2["skill_hi"], newacct_skill_p=r2["p_boot"])
             rows.append(rec)
     return pd.DataFrame(rows)
 
@@ -145,12 +155,20 @@ def run(df, outdir):
     for n, t in tables.items():
         if len(t):
             t.to_csv(os.path.join(outdir, n + ".csv"), index=False)
-    L = ["", "DOMAIN-SHIFT METHODS (gap = MAE grouped - MAE random; change < 0 = the method closes part of the gap):"]
+    L = ["", "DOMAIN-SHIFT METHODS (gap = MAE grouped - MAE random; gap change < 0 = a smaller gap).",
+         "  A smaller gap is not a better model: the decisive column is 'new-account skill vs gbm'",
+         "  (account-grouped MAE, paired; + = better than the plain GBM on a NEW account):"]
     if len(gap):
         for _, r in gap.sort_values(["method", "k"]).iterrows():
             if "gap_change_vs_gbm" in r and pd.notna(r.get("gap_change_vs_gbm")):
-                L.append(f"  k={int(r.k):>2} {r.method:<15} gap {r.gap:+.3f}  change vs gbm {r.gap_change_vs_gbm:+.3f} "
-                         f"[{r.gap_change_lo:+.3f}, {r.gap_change_hi:+.3f}] p={r.gap_change_p:.3f}")
+                sk = ""
+                if pd.notna(r.get("newacct_skill_vs_gbm")):
+                    flag = ("" if r.newacct_skill_lo <= 0 <= r.newacct_skill_hi else
+                            ("  <- better on new accounts" if r.newacct_skill_vs_gbm > 0 else "  <- WORSE on new accounts"))
+                    sk = (f" | new-account skill vs gbm {r.newacct_skill_vs_gbm:+.1%} "
+                          f"[{r.newacct_skill_lo:+.1%}, {r.newacct_skill_hi:+.1%}]{flag}")
+                L.append(f"  k={int(r.k):>2} {r.method:<15} gap {r.gap:+.3f} (change {r.gap_change_vs_gbm:+.3f}, "
+                         f"p={r.gap_change_p:.3f}){sk}")
             else:
                 L.append(f"  k={int(r.k):>2} {r.method:<15} gap {r.gap:+.3f} [{r.gap_lo:+.3f}, {r.gap_hi:+.3f}]")
     return dict(tables=tables, lines=L, payload=dict(res=res, paired=paired, gap=gap))

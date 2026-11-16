@@ -38,6 +38,7 @@ def build_parser():
     g.add_argument("--shift", action="store_true", help="domain-shift methods (weighting, group DRO, ...)")
     g.add_argument("--decision", action="store_true", help="KV-cache retention cost evaluation")
     g.add_argument("--mixture", action="store_true", help="latent-class mixture-of-experts")
+    g.add_argument("--robustness", action="store_true", help="re-run the headline results without / with capped heavy accounts")
     g.add_argument("--all-extras", dest="all_extras", action="store_true", help="turn on every extra above")
     return ap
 

@@ -101,23 +101,23 @@ cum_completion       0.0011
 Conformal (90% target) on NEW accounts, k=5, mean over 6 splits:
               coverage  width(x, median)  worst_harness  acct_p10
 method                                                           
-split            0.901            22.722          0.810     0.827
-mondrian         0.911            25.983          0.731     0.752
-normalized       0.911            23.697          0.803     0.803
-cqr              0.911            17.139          0.818     0.860
-random_calib     0.899            18.822          0.805     0.826
-  random_calib on SEEN accounts (what it looks like in-house): 90.3%
+split            0.899            22.421          0.807     0.826
+mondrian         0.903            24.891          0.717     0.717
+normalized       0.909            23.395          0.798     0.803
+cqr              0.910            17.073          0.818     0.860
+random_calib     0.897            18.335          0.804     0.826
+  random_calib on SEEN accounts (what it looks like in-house): 90.1%
 
 GROUP-AWARE CONFORMAL (k=5; mean over account re-splits; target coverage 90%):
   loao / cv_plus_group use train+calibration accounts together; weighted uses the split-conformal split.
                coverage  width_factor  worst_harness_cov  acct_cov_p10
 method                                                                
-split             0.901        22.722              0.810         0.827
-mondrian          0.911        25.983              0.731         0.752
-normalized        0.911        23.697              0.803         0.803
-cqr               0.911        17.139              0.818         0.860
-random_calib      0.899        18.822              0.805         0.826
-loao              0.933        24.343              0.833         0.868
+split             0.899        22.421              0.807         0.826
+mondrian          0.903        24.891              0.717         0.717
+normalized        0.909        23.395              0.798         0.803
+cqr               0.910        17.073              0.818         0.860
+random_calib      0.897        18.335              0.804         0.826
+loao              0.933        24.280              0.830         0.867
 cv_plus_group     0.944        25.859              0.831         0.871
 weighted          0.930        25.299              0.833         0.856
 
@@ -224,45 +224,82 @@ subagent         820              0.049       1.020
     k= 3: skill +0.1% [-0.5%, +0.7%] p=0.800
     k=12: skill +0.3% [-0.7%, +1.5%] p=0.440
 
-DOMAIN-SHIFT METHODS (gap = MAE grouped - MAE random; change < 0 = the method closes part of the gap):
-  k= 3 baseline_harness gap +0.079  change vs gbm +0.012 [-0.016, +0.039] p=0.580
-  k=12 baseline_harness gap +0.056  change vs gbm +0.016 [-0.006, +0.033] p=0.220
-  k= 3 gbm             gap +0.067 [+0.022, +0.104]
-  k=12 gbm             gap +0.040 [+0.018, +0.055]
-  k= 3 gbm_balanced    gap +0.017  change vs gbm -0.050 [-0.089, -0.006] p=0.013
-  k=12 gbm_balanced    gap +0.011  change vs gbm -0.029 [-0.043, -0.011] p=0.000
-  k= 3 gbm_dro         gap +0.025  change vs gbm -0.042 [-0.082, +0.005] p=0.107
-  k=12 gbm_dro         gap +0.027  change vs gbm -0.013 [-0.030, +0.011] p=0.313
-  k= 3 gbm_noidentity  gap +0.066  change vs gbm -0.000 [-0.008, +0.006] p=0.920
-  k=12 gbm_noidentity  gap +0.040  change vs gbm -0.001 [-0.008, +0.007] p=0.847
-  k= 3 gbm_sqrt        gap +0.043  change vs gbm -0.024 [-0.043, +0.001] p=0.087
-  k=12 gbm_sqrt        gap +0.029  change vs gbm -0.011 [-0.019, +0.005] p=0.187
+DOMAIN-SHIFT METHODS (gap = MAE grouped - MAE random; gap change < 0 = a smaller gap).
+  A smaller gap is not a better model: the decisive column is 'new-account skill vs gbm'
+  (account-grouped MAE, paired; + = better than the plain GBM on a NEW account):
+  k= 3 baseline_harness gap +0.079 (change +0.012, p=0.580) | new-account skill vs gbm +0.9% [-2.5%, +4.9%]
+  k=12 baseline_harness gap +0.056 (change +0.016, p=0.207) | new-account skill vs gbm +1.7% [-2.9%, +9.6%]
+  k= 3 gbm             gap +0.067 [+0.020, +0.103]
+  k=12 gbm             gap +0.040 [+0.024, +0.055]
+  k= 3 gbm_balanced    gap +0.017 (change -0.050, p=0.013) | new-account skill vs gbm +2.6% [-1.0%, +6.6%]
+  k=12 gbm_balanced    gap +0.011 (change -0.029, p=0.000) | new-account skill vs gbm +3.2% [-0.0%, +8.5%]
+  k= 3 gbm_dro         gap +0.025 (change -0.042, p=0.093) | new-account skill vs gbm +1.9% [-1.5%, +4.7%]
+  k=12 gbm_dro         gap +0.027 (change -0.013, p=0.340) | new-account skill vs gbm -1.4% [-4.3%, +0.9%]
+  k= 3 gbm_noidentity  gap +0.066 (change -0.000, p=0.867) | new-account skill vs gbm +0.2% [-0.4%, +0.9%]
+  k=12 gbm_noidentity  gap +0.040 (change -0.001, p=0.893) | new-account skill vs gbm +0.1% [-0.8%, +0.9%]
+  k= 3 gbm_sqrt        gap +0.043 (change -0.024, p=0.113) | new-account skill vs gbm +1.1% [-1.0%, +3.1%]
+  k=12 gbm_sqrt        gap +0.029 (change -0.011, p=0.107) | new-account skill vs gbm +0.8% [-1.0%, +4.4%]
 
 DECISION-FOCUSED EVALUATION (KV-cache retention; HOLD_RATE=0.01, break-even gap 100s; TTL grid [0, 10, 30, 60, 120, 300, 600, 1800]):
   saving = 1 - cost/cost(fixed_ttl); positive = cheaper than the best fixed TTL. Account-grouped CV.
-  k= 3 evict         saving -2014.2% [-2103.6%, -1905.5%]  hit-rate 0.00  <- costlier
+  The cost model is an ASSUMPTION (see the sensitivity table below).
+  k= 3 evict         saving -2014.2% [-2105.6%, -1880.3%]  hit-rate 0.00  <- costlier
   k= 3 harness_rate  saving +0.0% [+0.0%, +0.0%]  hit-rate 1.00
   k= 3 hazard_step   saving +0.0% [+0.0%, +0.0%]  hit-rate 1.00
-  k= 3 oracle        saving +10.7% [+7.8%, +15.1%]  hit-rate 1.00  <- cheaper
-  k=12 evict         saving -2013.6% [-2076.9%, -1917.0%]  hit-rate 0.00  <- costlier
+  k= 3 oracle        saving +10.7% [+7.5%, +15.3%]  hit-rate 1.00  <- cheaper
+  k=12 evict         saving -2013.6% [-2082.9%, -1916.5%]  hit-rate 0.00  <- costlier
   k=12 harness_rate  saving +0.0% [+0.0%, +0.0%]  hit-rate 1.00
   k=12 hazard_step   saving +0.0% [+0.0%, +0.0%]  hit-rate 1.00
-  k=12 oracle        saving +9.1% [+6.8%, +13.0%]  hit-rate 1.00  <- cheaper
+  k=12 oracle        saving +9.1% [+6.7%, +12.8%]  hit-rate 1.00  <- cheaper
+
+  SENSITIVITY of the hazard_step saving to the cost model (break-even gap = 1/HOLD_RATE seconds;
+  a hit costs HOLD_RATE per second held, a miss costs one prefix recompute):
+    k= 3 break-even   500s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k= 3 break-even   200s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k= 3 break-even   100s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k= 3 break-even    50s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k= 3 break-even    20s  hazard_step saving -0.1% [-0.3%, +0.0%]
+    k=12 break-even   500s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k=12 break-even   200s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k=12 break-even   100s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k=12 break-even    50s  hazard_step saving +0.0% [+0.0%, +0.0%]
+    k=12 break-even    20s  hazard_step saving +0.0% [+0.0%, +0.0%]
+  -> hazard_step is significantly cheaper than the best fixed TTL in 0 of 10 (k, cost-model) cells and significantly costlier in 0.
 
 LATENT-CLASS MIXTURE OF EXPERTS (classes by BIC inside each training fold):
   [grouped] mixture_experts vs gbm:
-    k= 3: skill -0.5% [-1.5%, +0.8%] p=0.487
-    k=12: skill +0.4% [-0.6%, +1.8%] p=0.467
+    k= 3: skill -0.5% [-1.5%, +0.9%] p=0.533
+    k=12: skill +0.4% [-0.6%, +2.1%] p=0.453
   [random] mixture_experts vs gbm:
-    k= 3: skill -1.3% [-2.8%, -0.2%] p=0.020  <- worse
-    k=12: skill -0.9% [-1.9%, +0.5%] p=0.153
+    k= 3: skill -1.3% [-2.7%, -0.2%] p=0.020  <- worse
+    k=12: skill -0.9% [-1.9%, +0.5%] p=0.167
   class profiles (k=12, mixture fitted on all data; descriptive):
  k  n_classes  cls  size  share  median_n_requests  p90_n_requests  mean_log_length  harness_hermes  harness_cline  harness_claude-code  harness_kilo
 12          2    0   536  0.237               29.0            91.0            3.561           0.381          0.299                0.140         0.116
 12          2    1  1726  0.763               31.0            99.0            3.598           0.364          0.348                0.116         0.112
 
+ROBUSTNESS TO HEAVY ACCOUNTS (drop / cap the biggest accounts, re-run the whole CV):
+  gap = MAE(grouped) - MAE(random) for the GBM; skill = 1 - MAE(gbm)/MAE(per-harness median)
+  k=3:
+    all         acc= 60 eff= 18.9  gap +0.067 [+0.020, +0.103] | skill new-account -0.9% [-5.0%, +2.1%], random -2.7%
+    drop_top1   acc= 59 eff= 22.8  gap +0.038 [+0.007, +0.073] | skill new-account -1.9% [-4.3%, +0.2%], random -2.4%
+    drop_top3   acc= 57 eff= 26.7  gap +0.007 [-0.003, +0.018] | skill new-account -3.2% [-5.9%, -0.7%], random -4.4%
+    drop_top10  acc= 50 eff= 37.2  gap +0.013 [-0.004, +0.026] | skill new-account -2.9% [-6.3%, +0.5%], random -4.7%
+    cap50       acc= 60 eff= 50.6  gap +0.022 [+0.008, +0.034] | skill new-account -2.4% [-5.3%, +0.3%], random -3.5%
+  k=12:
+    all         acc= 59 eff= 18.9  gap +0.040 [+0.020, +0.051] | skill new-account -1.7% [-10.7%, +2.9%], random -4.7%
+    drop_top1   acc= 58 eff= 22.8  gap +0.032 [+0.017, +0.046] | skill new-account -5.0% [-11.8%, +1.0%], random -7.4%
+    drop_top3   acc= 56 eff= 26.7  gap +0.010 [-0.002, +0.021] | skill new-account -8.4% [-12.6%, -5.0%], random -7.5%
+    drop_top10  acc= 49 eff= 37.2  gap +0.000 [-0.020, +0.020] | skill new-account -7.2% [-13.2%, -2.6%], random -10.3%
+    cap50       acc= 59 eff= 50.6  gap +0.004 [-0.010, +0.021] | skill new-account -7.0% [-11.3%, -3.6%], random -7.8%
+  STABILITY vs the full data:
+    drop_top1   max |change| gap 0.029, new-account skill 3.3%; gap CI excludes 0 at every k: yes; skill CI excludes 0 at every k: NO
+    drop_top3   max |change| gap 0.059, new-account skill 6.7%; gap CI excludes 0 at every k: NO; skill CI excludes 0 at every k: NO
+    drop_top10  max |change| gap 0.053, new-account skill 5.5%; gap CI excludes 0 at every k: NO; skill CI excludes 0 at every k: NO
+    cap50       max |change| gap 0.045, new-account skill 5.3%; gap CI excludes 0 at every k: NO; skill CI excludes 0 at every k: NO
+
 Caveats: target is requests per session; only sessions with > k requests are scored;
 censoring flags are a heuristic (UTC week bounds; try --drop-censored); sub-agent requests not counted;
 read grouped results with the effective number of accounts above in mind.
 
-Run info: 14 figure(s) in figures/, tables in tables/, extras in extras/, provenance in run_info/ (effective accounts 18.9).
+Run info: 15 figure(s) in figures/, tables in tables/, extras in extras/, provenance in run_info/ (effective accounts 18.9).

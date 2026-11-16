@@ -33,7 +33,8 @@ EXTRAS = [("hazard", "hazard", "evaluation.hazard"),
           ("process", "process", "evaluation.process"),
           ("shift", "shift", "evaluation.shift"),
           ("decision", "decision", "evaluation.decision"),
-          ("mixture", "mixture", "evaluation.mixture")]
+          ("mixture", "mixture", "evaluation.mixture"),
+          ("robustness", "robustness", "evaluation.robustness")]
 ALL_FLAGS = [e[0] for e in EXTRAS] + ["group_conformal"]
 
 FAILURES = []   # (analysis name, short error) of every analysis that failed in this run

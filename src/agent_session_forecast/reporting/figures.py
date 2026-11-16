@@ -289,6 +289,8 @@ def fig_distributional(ctx, axes):
 
 
 def fig_shift(ctx, axes):
+    """Left: does the method shrink the new-account gap?  Right (the one that matters): is it
+    actually better on a new account?  A method can shrink the gap just by hurting random CV."""
     P = _P(ctx, "shift")
     if not P or P["gap"] is None or "gap_change_vs_gbm" not in P["gap"]:
         return False
@@ -296,19 +298,26 @@ def fig_shift(ctx, axes):
     g = g[~g.method.isin(["baseline_harness"])]
     if not len(g):
         return False
-    ax = axes[0]
     ms, ks = sorted(g.method.unique()), sorted(g.k.unique())
-    for i, k in enumerate(ks):
-        s = g[g.k == k].set_index("method").reindex(ms)
-        y = np.arange(len(ms)) + (i - (len(ks) - 1) / 2) * 0.3
-        ax.errorbar(s.gap_change_vs_gbm, y, xerr=[s.gap_change_vs_gbm - s.gap_change_lo,
-                                                  s.gap_change_hi - s.gap_change_vs_gbm],
-                    fmt=MARK[i], color=PAL[i], capsize=3, label=f"k={k}")
-    ax.axvline(0, color="k", lw=1)
-    ax.set_yticks(range(len(ms))); ax.set_yticklabels(ms)
-    ax.set_xlabel("change in the new-account gap vs plain GBM (log-MAE; < 0 = gap closed)")
-    ax.set_title("Do domain-shift methods help on unseen accounts? (paired 95% CI)")
-    ax.legend()
+
+    def panel(ax, col, lo, hi, xlabel, title):
+        for i, k in enumerate(ks):
+            s = g[g.k == k].set_index("method").reindex(ms)
+            y = np.arange(len(ms)) + (i - (len(ks) - 1) / 2) * 0.3
+            ax.errorbar(s[col], y, xerr=[(s[col] - s[lo]).clip(lower=0), (s[hi] - s[col]).clip(lower=0)],
+                        fmt=MARK[i], color=PAL[i], capsize=3, label=f"k={k}")
+        ax.axvline(0, color="k", lw=1)
+        ax.set_yticks(range(len(ms))); ax.set_yticklabels(ms)
+        ax.set_xlabel(xlabel); ax.set_title(title)
+
+    panel(axes[0], "gap_change_vs_gbm", "gap_change_lo", "gap_change_hi",
+          "change in the new-account gap vs plain GBM (log-MAE; < 0 = smaller gap)",
+          "Does the method shrink the gap? (paired 95% CI)")
+    axes[0].legend()
+    if len(axes) > 1 and "newacct_skill_vs_gbm" in g:
+        panel(axes[1], "newacct_skill_vs_gbm", "newacct_skill_lo", "newacct_skill_hi",
+              "skill vs plain GBM on a NEW account  (+ = better, - = worse)",
+              "Is it actually better on new accounts? (paired 95% CI)")
     return True
 
 
@@ -358,6 +367,48 @@ def fig_decision(ctx, axes):
     ax.set_ylabel("saving vs best fixed TTL  (+ = cheaper)")
     ax.set_title(f"KV-cache retention cost by policy (HOLD_RATE={cfg.HOLD_RATE}); oracle = lower bound")
     ax.legend()
+    sens = P.get("sens")
+    if len(axes) > 1 and sens is not None and len(sens):
+        a2 = axes[1]
+        h = sens[sens.policy == "hazard_step"]
+        for i, k in enumerate(sorted(h.k.unique())):
+            q = h[h.k == k].sort_values("break_even_s")
+            _err(a2, q.break_even_s, q.saving_vs_fixed, q.saving_lo, q.saving_hi, marker=MARK[i],
+                 color=PAL[i], label=f"hazard_step, k={k}", lw=1)
+        a2.axhline(0, color="k", lw=1)
+        a2.set_xscale("log")
+        a2.set_xlabel("break-even gap in seconds (= 1 / HOLD_RATE)")
+        a2.set_ylabel("saving vs best fixed TTL")
+        a2.set_title("Sensitivity to the assumed cost model")
+        a2.legend()
+    return True
+
+
+def fig_robustness(ctx, axes):
+    P = _P(ctx, "robustness")
+    if not P or P["tab"] is None or not len(P["tab"]):
+        return False
+    t = P["tab"]
+    scs = list(dict.fromkeys(t.scenario))
+    ks = sorted(t.k.unique())
+    for ax, col, lo, hi, ttl, xl in (
+            (axes[0], "gap", "gap_lo", "gap_hi", "New-account gap without the heaviest accounts",
+             "MAE(grouped) - MAE(random)"),
+            (axes[-1], "skill_grouped", "skill_grouped_lo", "skill_grouped_hi",
+             "GBM skill on NEW accounts without the heaviest accounts", "skill over per-harness median")):
+        for i, k in enumerate(ks):
+            s = t[t.k == k].set_index("scenario").reindex(scs)
+            y = np.arange(len(scs)) + (i - (len(ks) - 1) / 2) * 0.18
+            ax.errorbar(s[col], y, xerr=[(s[col] - s[lo]).clip(lower=0), (s[hi] - s[col]).clip(lower=0)],
+                        fmt=MARK[i], color=PAL[i], capsize=2, ms=4, label=f"k={int(k)}")
+        ax.axvline(0, color="k", lw=1)
+        lab = []
+        for sc in scs:
+            r = t[t.scenario == sc].iloc[0]
+            lab.append(f"{sc}\n(eff. {r.effective_accounts:.0f} acc.)")
+        ax.set_yticks(range(len(scs))); ax.set_yticklabels(lab); ax.invert_yaxis()
+        ax.set_xlabel(xl); ax.set_title(ttl)
+    axes[0].legend()
     return True
 
 
@@ -419,12 +470,13 @@ FIGS = [("fig01_error_vs_k", 1, fig_error_vs_k, True),
         ("fig07_hazard", 2, fig_hazard, False),
         ("fig08_hierarchical", 2, fig_hierarchical, False),
         ("fig09_distributional", 2, fig_distributional, False),
-        ("fig10_shift", 1, fig_shift, False),
+        ("fig10_shift", 2, fig_shift, False),
         ("fig11_process", 2, fig_process, False),
-        ("fig12_decision", 1, fig_decision, False),
+        ("fig12_decision", 2, fig_decision, False),
         ("fig13_mixture", 2, fig_mixture, False),
         ("fig14_weekly_drift", 2, fig_weekly_drift, True),
-        ("fig15_extras_vs_gbm", 2, fig_extras_vs_gbm, False)]
+        ("fig15_extras_vs_gbm", 2, fig_extras_vs_gbm, False),
+        ("fig16_robustness", 2, fig_robustness, False)]
 
 
 def _try(fn, ctx, n):

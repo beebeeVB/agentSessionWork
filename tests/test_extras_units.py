@@ -151,3 +151,57 @@ def test_evaluate_predictors_pairs_on_identical_folds(df_big):
     out = features_at_k(df_big, 3)
     te_all = np.concatenate([te for _, _, te in iter_folds(out, "grouped")])
     assert len(set(te_all)) == len(out["y"])            # every session is tested exactly once
+
+
+# ---- new in this version: shift skill column, decision sensitivity, robustness --------------
+def test_shift_table_reports_new_account_skill(df_big):
+    """The 'gap closed' number alone is misleading, so the table must carry the grouped skill too."""
+    import tempfile
+    from agent_session_forecast.evaluation import shift
+    cfg.apply_fast_mode()
+    cfg.EXTRA_KS = [3]
+    R = shift.run(df_big, tempfile.mkdtemp())
+    gap = R["payload"]["gap"]
+    assert {"newacct_skill_vs_gbm", "newacct_skill_lo", "newacct_skill_hi"} <= set(gap.columns)
+    r = gap[gap.method == "gbm_sqrt"].iloc[0]
+    # skill = 1 - MAE(method, grouped) / MAE(gbm, grouped): recompute it from the table itself
+    g0 = gap[gap.method == "gbm"].iloc[0]
+    assert abs(r.newacct_skill_vs_gbm - (1 - r.mae_grouped / g0.mae_grouped)) < 1e-9
+    assert any("new-account skill vs gbm" in line for line in R["lines"])
+
+
+def test_decision_sensitivity_includes_the_main_setting_and_is_consistent(df_big):
+    import tempfile
+    cfg.apply_fast_mode()
+    cfg.EXTRA_KS = [3]
+    R = decision.run(df_big, tempfile.mkdtemp())
+    sens, main = R["payload"]["sens"], R["payload"]["res"]
+    assert set(decision.SWEEP_HOLD_RATES) | {cfg.HOLD_RATE} == set(np.round(sens.hold_rate.unique(), 6)) \
+        or set(decision.SWEEP_HOLD_RATES) <= set(sens.hold_rate.unique())
+    assert np.allclose(sens.break_even_s, 1.0 / sens.hold_rate)
+    assert np.isclose(main.hold_rate, cfg.HOLD_RATE).all()
+    # the main table is exactly the sensitivity table restricted to the configured rate
+    again = sens[np.isclose(sens.hold_rate, cfg.HOLD_RATE)].reset_index(drop=True)
+    pd.testing.assert_frame_equal(main, again)
+    # the oracle can never lose to fixed_ttl, whatever the cost model
+    orc = sens[sens.policy == "oracle"]
+    assert (orc.saving_vs_fixed >= -1e-9).all()
+    assert cfg.HOLD_RATE == 0.01                      # the sweep must restore the configured value
+
+
+def test_robustness_scenarios_remove_the_heaviest_accounts(df_big):
+    from agent_session_forecast.evaluation import robustness
+    sc = robustness.scenarios(df_big)
+    top = df_big.groupby("user_id").size().sort_values(ascending=False).index.tolist()
+    assert "all" in sc and len(sc["all"]) == len(df_big)
+    for n in (1, 3, 10):
+        name = f"drop_top{n}"
+        if name in sc:
+            assert not sc[name].user_id.isin(top[:n]).any()
+            assert len(sc[name]) < len(df_big)
+    cap = sc.get(f"cap{robustness.CAP}")
+    if cap is not None:
+        assert cap.groupby("user_id").size().max() <= robustness.CAP
+        assert cap.user_id.nunique() == df_big.user_id.nunique()      # nobody is dropped, only capped
+    for d in sc.values():
+        assert robustness._eff(d) >= 1.0
