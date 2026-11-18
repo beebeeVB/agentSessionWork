@@ -1,0 +1,5 @@
+scenario,max_abs_gap_change,max_abs_skill_change,gap_still_positive,skill_still_positive,skill_sign_kept
+drop_top1,0.012876175532654632,0.026357843318373875,True,True,True
+drop_top3,0.03202444787957193,0.023491644415650104,True,True,True
+drop_top10,0.01818022741085623,0.02484443326080754,True,False,True
+cap50,0.033029574472259515,0.01032877148443656,True,True,True
